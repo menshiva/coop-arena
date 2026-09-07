@@ -1,0 +1,58 @@
+﻿# Ignore all files by default, but scan all directories.
+*
+!*/
+
+# Do not ignore git files in the root of the repo.
+!/.git*
+
+# Do not ignore current project's `.uproject`.
+!/CoopArena.uproject
+
+# Do not ignore source, config and plugins dirs.
+!/Source/**
+!/Config/**
+!/Plugins/**
+/Plugins/**/Binaries/
+/Plugins/**/Intermediate/
+
+!/README.md
+
+# Only allow .uasset and .umap files from /Content dir.
+!/Content/**/*.uasset
+!/Content/**/*.umap
+!/Content/**/*.png
+!/Content/**/*.jpg
+!/Content/**/*.ttf
+!/Content/**/*.csv
+!/Content/**/*.manifest
+!/Content/**/*.txt
+!/Content/**/*.archive
+!/Content/**/*.locmeta
+!/Content/**/*.locres
+
+# OS/platform generated files.
+
+# Windows
+ehthumbs.db
+Thumbs.db
+
+# Mac OS X
+.DS_Store
+.DS_Store?
+.AppleDouble
+.LSOverride
+._*
+
+# Linux
+*~
+.directory
+
+# vim
+[._]*.s[a-w][a-z]
+[._]s[a-w][a-z]
+*.un~
+Session.vim
+.netrwhist
+
+# Visual Studio
+.vs

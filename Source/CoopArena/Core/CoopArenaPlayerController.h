@@ -1,5 +1,6 @@
 #pragma once
 
+#include "GameFramework/PlayerController.h"
 #include "CoopArenaPlayerController.generated.h"
 
 class UInputMappingContext;

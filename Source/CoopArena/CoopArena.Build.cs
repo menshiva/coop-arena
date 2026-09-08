@@ -16,7 +16,12 @@ public class CoopArena : ModuleRules
 			"EnhancedInput",
 			"AIModule",
 			"UMG",
-			"Slate"
+			"Slate",
+			"GameplayTags",
+			"GameplayTasks",
+			"GameplayAbilities"
 		});
+
+		PublicIncludePaths.Add(ModuleDirectory);
 	}
 }

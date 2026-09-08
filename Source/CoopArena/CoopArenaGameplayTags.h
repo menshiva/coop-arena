@@ -1,0 +1,19 @@
+﻿#pragma once
+
+#include "NativeGameplayTags.h"
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Ability_Attack_Simple);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Ability_Attack_Fire);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Ability_Attack_Water);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Ability_Attack_Lightning);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Ability_Dash);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Cooldown_Attack_Fire);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Cooldown_Attack_Water);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Cooldown_Attack_Lightning);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Cooldown_Dash);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Status_Dead);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Team_Players);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Team_Enemies);

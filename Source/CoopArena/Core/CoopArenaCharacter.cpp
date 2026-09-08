@@ -1,10 +1,13 @@
 #include "CoopArenaCharacter.h"
+#include "AbilitySystemComponent.h"
 #include "CoopArena.h"
+#include "CoopArenaPlayerState.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
+#include "AbilitySystem/Abilities/CoopArenaGameplayAbility.h"
 
 ACoopArenaCharacter::ACoopArenaCharacter() {
 	GetCapsuleComponent()->InitCapsuleSize(32.f, 90.0f);
@@ -30,18 +33,39 @@ ACoopArenaCharacter::ACoopArenaCharacter() {
 	FollowCamera->bUsePawnControlRotation = false;
 }
 
+void ACoopArenaCharacter::PossessedBy(AController* NewController) {
+	Super::PossessedBy(NewController);
+	if (const auto StatePtr = GetPlayerState<ACoopArenaPlayerState>()) {
+		AbilitySystem = StatePtr->GetAbilitySystemComponent();
+		AbilitySystem->InitAbilityActorInfo(StatePtr, this);
+
+		if (InitStatsEffect) {
+			auto Context = AbilitySystem->MakeEffectContext();
+			Context.AddSourceObject(this);
+			AbilitySystem->ApplyGameplayEffectToSelf(InitStatsEffect->GetDefaultObject<UGameplayEffect>(), 1.0f, Context);
+		}
+
+		for (const auto& Binding : AbilityBindings)
+			if (Binding.bGrantedAtStart && Binding.AbilityClass && !AbilitySystem->FindAbilitySpecFromClass(Binding.AbilityClass))
+				AbilitySystem->GiveAbility(FGameplayAbilitySpec(Binding.AbilityClass, 1));
+	}
+}
+
 void ACoopArenaCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) {
-	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
+	if (const auto EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
+		// Moving
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ACoopArenaCharacter::Move);
+		EnhancedInputComponent->BindAction(MouseLookAction, ETriggerEvent::Triggered, this, &ACoopArenaCharacter::Look);
+		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ACoopArenaCharacter::Look);
+
 		// Jumping
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
-		// Moving
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ACoopArenaCharacter::Move);
-		EnhancedInputComponent->BindAction(MouseLookAction, ETriggerEvent::Triggered, this, &ACoopArenaCharacter::Look);
-
-		// Looking
-		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ACoopArenaCharacter::Look);
+		// Abilities
+		for (const auto& Binding : AbilityBindings)
+			if (Binding.InputAction)
+				EnhancedInputComponent->BindAction(Binding.InputAction, ETriggerEvent::Started, this, &ACoopArenaCharacter::OnAbilityInput, Binding.AbilityTag);
 	}
 	else {
 		UE_LOG(LogCoopArena, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
@@ -70,4 +94,9 @@ void ACoopArenaCharacter::Look(const FInputActionValue& Value) {
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
+}
+
+void ACoopArenaCharacter::OnAbilityInput(const FGameplayTag AbilityTag) {
+	if (AbilitySystem.IsValid())
+		AbilitySystem->TryActivateAbilitiesByTag(FGameplayTagContainer(AbilityTag));
 }

@@ -21,5 +21,8 @@ protected:
 	float Strength = 2000.0f;
 
 	UPROPERTY(EditDefaultsOnly, Category="Modifiers")
+	float FlyingStrength = 2000.0f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Modifiers")
 	float Duration = 0.2f;
 };

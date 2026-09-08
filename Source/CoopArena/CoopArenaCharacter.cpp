@@ -1,20 +1,12 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #include "CoopArenaCharacter.h"
-#include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "GameFramework/Controller.h"
 #include "EnhancedInputComponent.h"
-#include "EnhancedInputSubsystems.h"
-#include "InputActionValue.h"
 #include "CoopArena.h"
 
-ACoopArenaCharacter::ACoopArenaCharacter()
-{
-	// Set size for collision capsule
+ACoopArenaCharacter::ACoopArenaCharacter() {
 	GetCapsuleComponent()->InitCapsuleSize(32.f, 90.0f);
 
 	// Don't rotate when the controller rotates. Let that just affect the camera.
@@ -45,16 +37,10 @@ ACoopArenaCharacter::ACoopArenaCharacter()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
-
-	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
-	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 }
 
-void ACoopArenaCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	// Set up action bindings
+void ACoopArenaCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) {
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
-		
 		// Jumping
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
@@ -66,68 +52,31 @@ void ACoopArenaCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ACoopArenaCharacter::Look);
 	}
-	else
-	{
+	else {
 		UE_LOG(LogCoopArena, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
 	}
 }
 
-void ACoopArenaCharacter::Move(const FInputActionValue& Value)
-{
-	// input is a Vector2D
-	FVector2D MovementVector = Value.Get<FVector2D>();
+void ACoopArenaCharacter::Move(const FInputActionValue& Value) {
+	if (const auto ControllerPtr = GetController()) {
+		const auto MovementVector = Value.Get<FVector2D>();
 
-	// route the input
-	DoMove(MovementVector.X, MovementVector.Y);
-}
-
-void ACoopArenaCharacter::Look(const FInputActionValue& Value)
-{
-	// input is a Vector2D
-	FVector2D LookAxisVector = Value.Get<FVector2D>();
-
-	// route the input
-	DoLook(LookAxisVector.X, LookAxisVector.Y);
-}
-
-void ACoopArenaCharacter::DoMove(float Right, float Forward)
-{
-	if (GetController() != nullptr)
-	{
 		// find out which way is forward
-		const FRotator Rotation = GetController()->GetControlRotation();
+		const auto Rotation = ControllerPtr->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 
-		// get forward vector
-		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+		const auto ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+		const auto RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
-		// get right vector 
-		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-
-		// add movement 
-		AddMovementInput(ForwardDirection, Forward);
-		AddMovementInput(RightDirection, Right);
+		AddMovementInput(ForwardDirection, MovementVector.Y);
+		AddMovementInput(RightDirection, MovementVector.X);
 	}
 }
 
-void ACoopArenaCharacter::DoLook(float Yaw, float Pitch)
-{
-	if (GetController() != nullptr)
-	{
-		// add yaw and pitch input to controller
-		AddControllerYawInput(Yaw);
-		AddControllerPitchInput(Pitch);
+void ACoopArenaCharacter::Look(const FInputActionValue& Value) {
+	if (GetController()) {
+		const auto LookAxisVector = Value.Get<FVector2D>();
+		AddControllerYawInput(LookAxisVector.X);
+		AddControllerPitchInput(LookAxisVector.Y);
 	}
-}
-
-void ACoopArenaCharacter::DoJumpStart()
-{
-	// signal the character to jump
-	Jump();
-}
-
-void ACoopArenaCharacter::DoJumpEnd()
-{
-	// signal the character to stop jumping
-	StopJumping();
 }

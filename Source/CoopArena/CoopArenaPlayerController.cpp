@@ -1,25 +1,14 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
-
 #include "CoopArenaPlayerController.h"
 #include "EnhancedInputSubsystems.h"
-#include "Engine/LocalPlayer.h"
-#include "InputMappingContext.h"
 
-void ACoopArenaPlayerController::SetupInputComponent()
-{
+void ACoopArenaPlayerController::SetupInputComponent() {
 	Super::SetupInputComponent();
 
 	// only add IMCs for local player controllers
-	if (IsLocalPlayerController())
-	{
+	if (IsLocalPlayerController()) {
 		// Add Input Mapping Contexts
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
-		{
-			for (UInputMappingContext* CurrentContext : DefaultMappingContexts)
-			{
-				Subsystem->AddMappingContext(CurrentContext, 0);
-			}
-		}
+		if (const auto SubsystemPtr = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+			for (const auto CurrentContextPtr : DefaultMappingContexts)
+				SubsystemPtr->AddMappingContext(CurrentContextPtr, 0);
 	}
 }

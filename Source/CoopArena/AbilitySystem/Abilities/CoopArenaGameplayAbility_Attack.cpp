@@ -1,15 +1,13 @@
 ﻿#include "CoopArenaGameplayAbility_Attack.h"
-#include "CoopArena.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
-#include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 #include "Weapons/CoopArenaProjectileManager.h"
 
 UCoopArenaGameplayAbility_Attack::UCoopArenaGameplayAbility_Attack() {
 	FGameplayTagContainer Tags;
-	Tags.AddTagFast(CoopArena_Ability_Attack_Simple);
+	Tags.AddTagFast(CoopArena_Ability_Attack);
 	SetAssetTags(Tags);
 }
 

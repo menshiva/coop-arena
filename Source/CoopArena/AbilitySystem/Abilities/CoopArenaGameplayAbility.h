@@ -10,6 +10,7 @@ class UCoopArenaGameplayAbility : public UGameplayAbility {
 public:
 	UCoopArenaGameplayAbility() {
 		InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
+		bRetriggerInstancedAbility = true;
 		ActivationBlockedTags.AddTag(CoopArena_Status_Dead);
 	}
 };

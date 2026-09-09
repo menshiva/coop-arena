@@ -13,6 +13,8 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Cooldown_Attack_Water);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Cooldown_Attack_Lightning);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Cooldown_Dash);
 
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Event_Attack);
+
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Status_Dead);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Team_Players);

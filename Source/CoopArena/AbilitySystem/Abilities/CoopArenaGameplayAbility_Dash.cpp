@@ -1,4 +1,5 @@
 ﻿#include "CoopArenaGameplayAbility_Dash.h"
+#include "AbilitySystemComponent.h"
 #include "Abilities/Tasks/AbilityTask_ApplyRootMotionConstantForce.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -13,19 +14,16 @@ void UCoopArenaGameplayAbility_Dash::ActivateAbility(
 	const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData*
 ) {
-	if (CommitAbility(Handle, ActorInfo, ActivationInfo)) {
-		if (const auto CharacterPtr = Cast<ACharacter>(ActorInfo->AvatarActor.Get())) {
-			const auto MovementPtr = CharacterPtr->GetCharacterMovement();
-			if (!MovementPtr->Velocity.IsNearlyZero()) {
+	if (const auto CharacterPtr = Cast<ACharacter>(ActorInfo->AvatarActor.Get())) {
+		const auto MovementPtr = CharacterPtr->GetCharacterMovement();
+		if (!MovementPtr->Velocity.IsNearlyZero()) {
+			if (CommitAbility(Handle, ActorInfo, ActivationInfo)) {
 				auto Direction = CharacterPtr->GetLastMovementInputVector();
 				if (Direction.IsNearlyZero())
 					Direction = CharacterPtr->GetActorForwardVector();
 
-				if (const auto AnimInstance = CharacterPtr->GetMesh()->GetAnimInstance(); AnimInstance && DashMontage) {
-					AnimInstance->Montage_Play(
-						DashMontage, 1.0f, EMontagePlayReturnType::MontageLength, 0.0f, true
-					);
-				}
+				if (ActorInfo->AbilitySystemComponent.IsValid())
+					ActorInfo->AbilitySystemComponent->PlayMontage(this, ActivationInfo, DashMontage, 1.0f);
 
 				const auto Task = UAbilityTask_ApplyRootMotionConstantForce::ApplyRootMotionConstantForce(
 					this, FName("Dash"), Direction.GetSafeNormal2D(),

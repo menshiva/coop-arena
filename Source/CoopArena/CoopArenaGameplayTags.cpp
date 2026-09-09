@@ -11,6 +11,8 @@ UE_DEFINE_GAMEPLAY_TAG_COMMENT(CoopArena_Cooldown_Attack_Water, "CoopArena.Coold
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(CoopArena_Cooldown_Attack_Lightning, "CoopArena.Cooldown.Attack.Lightning", "Blocks the lightning attack.");
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(CoopArena_Cooldown_Dash, "CoopArena.Cooldown.Dash", "Blocks the dash ability.");
 
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(CoopArena_Event_Attack, "CoopArena.Event.Attack", "Attack animation event.");
+
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(CoopArena_Status_Dead, "CoopArena.Status.Dead", "Dead. Blocks every ability.");
 
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(CoopArena_Team_Players, "CoopArena.Team.Players", "Player-controlled actor.");

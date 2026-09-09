@@ -29,7 +29,10 @@ public:
 protected:
 	virtual void BeginPlay() override;
 public:
-	void Launch(const FVector& Location, const FVector& Velocity, const FGameplayEffectSpecHandle& DamageSpec);
+	void Launch(
+		const FVector& Location, const FVector& Velocity, const FGameplayEffectSpecHandle& DamageSpec,
+		AActor* ActorToIgnore
+	);
 
 	void OnBallImpact(int32 SlotIndex, const FHitResult& Hit);
 	void OnBallStopped(int32 SlotIndex);

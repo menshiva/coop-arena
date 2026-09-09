@@ -26,7 +26,10 @@ void ACoopArenaProjectileManager::BeginPlay() {
 	}
 }
 
-void ACoopArenaProjectileManager::Launch(const FVector& Location, const FVector& Velocity, const FGameplayEffectSpecHandle& DamageSpec) {
+void ACoopArenaProjectileManager::Launch(
+	const FVector& Location, const FVector& Velocity, const FGameplayEffectSpecHandle& DamageSpec,
+	AActor* ActorToIgnore
+) {
 	int32 SlotIdx;
 	if (!BallSlotFreeIndices.IsEmpty()) {
 		auto It = BallSlotFreeIndices.CreateIterator();
@@ -57,6 +60,9 @@ void ACoopArenaProjectileManager::Launch(const FVector& Location, const FVector&
 		Slot.Mesh->SetWorldLocation(Location);
 		Slot.Mesh->SetVisibility(true);
 		Slot.Mesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		Slot.Mesh->ClearMoveIgnoreActors();
+		if (ActorToIgnore)
+			Slot.Mesh->MoveIgnoreActors.Push(ActorToIgnore);
 
 		Slot.Movement->SetUpdatedComponent(Slot.Mesh);
 		Slot.Movement->Velocity = Velocity;
@@ -67,8 +73,9 @@ void ACoopArenaProjectileManager::Launch(const FVector& Location, const FVector&
 void ACoopArenaProjectileManager::OnBallImpact(const int32 SlotIndex, const FHitResult& Hit) {
 	if (!BallSlots.IsValidIndex(SlotIndex) || BallSlotFreeIndices.Contains(SlotIndex))
 		return;
-
 	auto& Slot = BallSlots[SlotIndex];
+
+	Slot.Mesh->ClearMoveIgnoreActors();
 	if (!Slot.DamageSpec.IsValid())
 		return;
 
@@ -105,6 +112,7 @@ void ACoopArenaProjectileManager::OnBallStopped(const int32 SlotIndex) {
 
 		Slot.Mesh->SetVisibility(false);
 		Slot.Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		Slot.Mesh->ClearMoveIgnoreActors();
 
 		Slot.DamageSpec.Clear();
 	}

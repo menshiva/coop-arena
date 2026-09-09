@@ -64,5 +64,5 @@ void UCoopArenaGameplayAbility_Attack::OnAttackEvent(FGameplayEventData) {
 	TossParams.bAcceptClosestOnNoSolutions = true;
 	UGameplayStatics::SuggestProjectileVelocity(TossParams, TossVelocity);
 
-	ProjectileManagerCache->Launch(Muzzle, TossVelocity, FGameplayEffectSpecHandle());
+	ProjectileManagerCache->Launch(Muzzle, TossVelocity, FGameplayEffectSpecHandle(), CharacterPtr);
 }

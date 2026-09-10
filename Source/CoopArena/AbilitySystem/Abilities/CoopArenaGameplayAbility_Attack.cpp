@@ -55,14 +55,19 @@ void UCoopArenaGameplayAbility_Attack::OnAttackEvent(FGameplayEventData) {
 		? Hit.ImpactPoint
 		: TraceEnd;
 
-	const auto Muzzle = CharacterPtr->GetMesh()->GetSocketLocation(MuzzleSocket);
+	const auto SocketPos = CharacterPtr->GetMesh()->GetSocketLocation(SocketName);
 
-	FVector TossVelocity;
-	UGameplayStatics::FSuggestProjectileVelocityParameters TossParams(GetWorld(), Muzzle, AimPoint, TossSpeed);
+	UGameplayStatics::FSuggestProjectileVelocityParameters TossParams(GetWorld(), SocketPos, AimPoint, Speed);
 	TossParams.bFavorHighArc = false;
 	TossParams.TraceOption = ESuggestProjVelocityTraceOption::DoNotTrace;
 	TossParams.bAcceptClosestOnNoSolutions = true;
-	UGameplayStatics::SuggestProjectileVelocity(TossParams, TossVelocity);
 
-	ProjectileManagerCache->Launch(Muzzle, TossVelocity, FGameplayEffectSpecHandle(), CharacterPtr);
+	FVector Velocity;
+	UGameplayStatics::SuggestProjectileVelocity(TossParams, Velocity);
+
+	const auto DamageSpec = MakeOutgoingGameplayEffectSpec(DamageEffect);
+	if (DamageSpec.IsValid())
+		DamageSpec.Data->SetSetByCallerMagnitude(CoopArena_Data_Damage, -FMath::FRandRange(DamageRange.Min, DamageRange.Max));
+
+	ProjectileManagerCache->Launch(SocketPos, Velocity, DamageSpec, CharacterPtr);
 }

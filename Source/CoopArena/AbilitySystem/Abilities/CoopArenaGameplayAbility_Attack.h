@@ -20,13 +20,19 @@ protected:
 	TObjectPtr<UAnimMontage> AttackMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category="Attack")
-	FName MuzzleSocket;
+	FName SocketName;
 
 	UPROPERTY(EditDefaultsOnly, Category="Attack")
 	float AimRange = 10000.0f;
 
 	UPROPERTY(EditDefaultsOnly, Category="Attack")
-	float TossSpeed = 2000.0f;
+	float Speed = 2000.0f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Attack")
+	TSubclassOf<UGameplayEffect> DamageEffect;
+
+	UPROPERTY(EditDefaultsOnly, Category="Attack")
+	FFloatInterval DamageRange = FFloatInterval(10.0f, 20.0f);
 private:
 	UFUNCTION()
 	void OnAttackEvent(FGameplayEventData Payload);

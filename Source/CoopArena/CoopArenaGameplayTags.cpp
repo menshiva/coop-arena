@@ -8,4 +8,6 @@ UE_DEFINE_GAMEPLAY_TAG_COMMENT(CoopArena_Cooldown_Dash, "CoopArena.Cooldown.Dash
 
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(CoopArena_Event_Attack, "CoopArena.Event.Attack", "Attack animation event.");
 
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(CoopArena_Data_Damage, "CoopArena.Data.Damage", "Damage value.");
+
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(CoopArena_Status_Dead, "CoopArena.Status.Dead", "Dead. Blocks every ability.");

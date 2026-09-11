@@ -19,7 +19,8 @@ public class CoopArena : ModuleRules
 			"Slate",
 			"GameplayTags",
 			"GameplayTasks",
-			"GameplayAbilities"
+			"GameplayAbilities",
+			"NavigationSystem"
 		});
 
 		PublicIncludePaths.Add(ModuleDirectory);

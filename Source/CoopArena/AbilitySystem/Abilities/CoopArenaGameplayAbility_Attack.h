@@ -23,9 +23,6 @@ protected:
 	FName SocketName;
 
 	UPROPERTY(EditDefaultsOnly, Category="Attack")
-	float AimRange = 10000.0f;
-
-	UPROPERTY(EditDefaultsOnly, Category="Attack")
 	float Speed = 2000.0f;
 
 	UPROPERTY(EditDefaultsOnly, Category="Attack")

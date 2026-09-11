@@ -29,6 +29,8 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Health")
 	float MaxHealth = 0.0f;
 private:
+	void OnDeath(AActor* Killer);
+
 	UPROPERTY()
 	TObjectPtr<UAbilitySystemComponent> AbilitySystem;
 

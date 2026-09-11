@@ -1,4 +1,5 @@
 ﻿#include "CoopArenaAttributeSet.h"
+#include "GameplayEffectExtension.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 void UCoopArenaAttributeSet::PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const {
@@ -24,6 +25,13 @@ void UCoopArenaAttributeSet::PostAttributeChange(const FGameplayAttribute& Attri
 	if (Attribute == GetMaxHealthAttribute())
 		if (GetHealth() > NewValue)
 			SetHealth(NewValue);
+}
+
+void UCoopArenaAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) {
+	Super::PostGameplayEffectExecute(Data);
+
+	if (Data.EvaluatedData.Attribute == GetHealthAttribute() && GetHealth() <= 0.01f)
+		OnDeath.Broadcast(Data.EffectSpec.GetContext().GetOriginalInstigator());
 }
 
 void UCoopArenaAttributeSet::ClampAttribute(const FGameplayAttribute& Attribute, float& NewValue) const {

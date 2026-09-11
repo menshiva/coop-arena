@@ -47,7 +47,7 @@ void UCoopArenaGameplayAbility_Attack::OnAttackEvent(FGameplayEventData) {
 	FRotator ViewRotation;
 	CharacterPtr->GetController()->GetPlayerViewPoint(ViewLocation, ViewRotation);
 
-	const auto TraceEnd = ViewLocation + ViewRotation.Vector() * AimRange;
+	const auto TraceEnd = ViewLocation + ViewRotation.Vector() * 10000.0;
 
 	FHitResult Hit;
 	const FCollisionQueryParams Params(SCENE_QUERY_STAT(CoopArenaAttackAim), false, CharacterPtr);

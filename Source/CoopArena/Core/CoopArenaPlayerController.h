@@ -6,9 +6,17 @@
 class UUserWidget;
 class UInputMappingContext;
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FCoopArenaOnInputDeviceChanged, bool /*bGamepad*/);
+
 UCLASS(Abstract)
 class ACoopArenaPlayerController : public APlayerController {
 	GENERATED_BODY()
+public:
+	virtual bool InputKey(const FInputKeyEventArgs& Params) override;
+
+	FORCEINLINE bool IsUsingGamepad() const { return bUsingGamepad; }
+
+	FCoopArenaOnInputDeviceChanged OnInputDeviceChanged;
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
@@ -18,4 +26,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category ="Input|Input Mappings")
 	TArray<UInputMappingContext*> DefaultMappingContexts;
+private:
+	bool bUsingGamepad = false;
 };

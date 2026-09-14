@@ -17,6 +17,7 @@ public class CoopArena : ModuleRules
 			"AIModule",
 			"UMG",
 			"Slate",
+			"SlateCore",
 			"GameplayTags",
 			"GameplayTasks",
 			"GameplayAbilities",

@@ -10,6 +10,8 @@ class UCoopArenaGameplayAbility_Attack : public UCoopArenaGameplayAbility {
 	GENERATED_BODY()
 public:
 	UCoopArenaGameplayAbility_Attack();
+
+	int32 GetDamageAtDistance(float Distance) const;
 protected:
 	virtual void ActivateAbility(
 		const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
@@ -30,6 +32,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category="Attack")
 	FInt32Interval DamageRange = FInt32Interval(10, 20);
+
+	UPROPERTY(EditDefaultsOnly, Category="Attack")
+	FFloatInterval DamageDistance = FFloatInterval(500.0f, 2000.0f);
 private:
 	UFUNCTION()
 	void OnAttackEvent(FGameplayEventData Payload);

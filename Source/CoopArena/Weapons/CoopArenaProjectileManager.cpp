@@ -56,6 +56,8 @@ void ACoopArenaProjectileManager::Launch(
 		auto& Slot = BallSlots[SlotIdx];
 
 		Slot.DamageSpec = DamageSpec;
+		if (Slot.DamageSpec.IsValid())
+			Slot.DamageSpec.Data->GetContext().AddOrigin(Location);
 
 		Slot.Mesh->SetWorldLocation(Location);
 		Slot.Mesh->SetVisibility(true);
@@ -79,8 +81,10 @@ void ACoopArenaProjectileManager::OnBallImpact(const int32 SlotIndex, const FHit
 	if (!Slot.DamageSpec.IsValid())
 		return;
 
-	if (const auto TargetAbilitySystem = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Hit.GetActor()))
+	if (const auto TargetAbilitySystem = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Hit.GetActor())) {
+		Slot.DamageSpec.Data->GetContext().AddHitResult(Hit);
 		TargetAbilitySystem->ApplyGameplayEffectSpecToSelf(*Slot.DamageSpec.Data.Get());
+	}
 
 	Slot.DamageSpec.Clear();
 }

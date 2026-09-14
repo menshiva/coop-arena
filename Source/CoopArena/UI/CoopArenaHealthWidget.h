@@ -3,7 +3,7 @@
 #include "Blueprint/UserWidget.h"
 #include "CoopArenaHealthWidget.generated.h"
 
-UCLASS(Abstract)
+UCLASS(Abstract, meta=(DisableNativeTick))
 class UCoopArenaHealthWidget : public UUserWidget {
 	GENERATED_BODY()
 public:

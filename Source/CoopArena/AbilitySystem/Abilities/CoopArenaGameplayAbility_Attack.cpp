@@ -65,9 +65,11 @@ void UCoopArenaGameplayAbility_Attack::OnAttackEvent(FGameplayEventData) {
 	FVector Velocity;
 	UGameplayStatics::SuggestProjectileVelocity(TossParams, Velocity);
 
-	const auto DamageSpec = MakeOutgoingGameplayEffectSpec(DamageEffect);
-	if (DamageSpec.IsValid())
-		DamageSpec.Data->SetSetByCallerMagnitude(CoopArena_Data_Damage, -FMath::RandRange(DamageRange.Min, DamageRange.Max));
+	ProjectileManagerCache->Launch(SocketPos, Velocity, MakeOutgoingGameplayEffectSpec(DamageEffect), CharacterPtr);
+}
 
-	ProjectileManagerCache->Launch(SocketPos, Velocity, DamageSpec, CharacterPtr);
+int32 UCoopArenaGameplayAbility_Attack::GetDamageAtDistance(const float Distance) const {
+	return FMath::RoundToInt(FMath::GetMappedRangeValueClamped(
+		FVector2f(DamageDistance.Min, DamageDistance.Max), FVector2f(DamageRange.Max, DamageRange.Min), Distance
+	));
 }

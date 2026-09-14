@@ -40,6 +40,8 @@ void ACoopArenaEnemyCharacter::BeginPlay() {
 	Attributes->SetMaxHealth(MaxHealth);
 	Attributes->SetHealth(MaxHealth);
 	Attributes->OnDeath.AddUObject(this, &ACoopArenaEnemyCharacter::OnDeath);
+
+	HealthWidget->RequestRenderUpdate();
 }
 
 void ACoopArenaEnemyCharacter::Tick(const float DeltaSeconds) {
@@ -52,7 +54,7 @@ void ACoopArenaEnemyCharacter::Tick(const float DeltaSeconds) {
 void ACoopArenaEnemyCharacter::OnHealthChanged(const FOnAttributeChangeData&) const {
 	if (const auto Widget = Cast<UCoopArenaHealthWidget>(HealthWidget->GetWidget())) {
 		Widget->OnHealthChanged(FMath::RoundToInt(Attributes->GetHealth()), FMath::RoundToInt(Attributes->GetMaxHealth()));
-		HealthWidget->RequestRedraw();
+		HealthWidget->RequestRenderUpdate();
 	}
 }
 

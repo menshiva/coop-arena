@@ -67,7 +67,7 @@ void UCoopArenaGameplayAbility_Attack::OnAttackEvent(FGameplayEventData) {
 
 	const auto DamageSpec = MakeOutgoingGameplayEffectSpec(DamageEffect);
 	if (DamageSpec.IsValid())
-		DamageSpec.Data->SetSetByCallerMagnitude(CoopArena_Data_Damage, -FMath::FRandRange(DamageRange.Min, DamageRange.Max));
+		DamageSpec.Data->SetSetByCallerMagnitude(CoopArena_Data_Damage, -FMath::RandRange(DamageRange.Min, DamageRange.Max));
 
 	ProjectileManagerCache->Launch(SocketPos, Velocity, DamageSpec, CharacterPtr);
 }

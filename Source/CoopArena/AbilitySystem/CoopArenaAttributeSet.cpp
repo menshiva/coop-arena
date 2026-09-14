@@ -10,8 +10,12 @@ void UCoopArenaAttributeSet::PreAttributeBaseChange(const FGameplayAttribute& At
 void UCoopArenaAttributeSet::PostAttributeBaseChange(const FGameplayAttribute& Attribute, const float OldValue, const float NewValue) const {
 	Super::PostAttributeBaseChange(Attribute, OldValue, NewValue);
 
-	if (Attribute == GetHealthAttribute() && NewValue < OldValue)
-		UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("took %.1f damage, %.1f health left"), OldValue - NewValue, NewValue), true, true, FLinearColor::Red, 5.0f);
+	if (Attribute == GetHealthAttribute() && NewValue < OldValue) {
+		UKismetSystemLibrary::PrintString(
+			this, FString::Printf(TEXT("took %d damage, %d health left"), FMath::RoundToInt(OldValue - NewValue), FMath::RoundToInt(NewValue)),
+			true, true, FLinearColor::Red, 5.0f
+		);
+	}
 }
 
 void UCoopArenaAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) {

@@ -6,6 +6,8 @@
 
 class UAbilitySystemComponent;
 class UCoopArenaAttributeSet;
+class UWidgetComponent;
+struct FOnAttributeChangeData;
 
 UCLASS(Abstract)
 class ACoopArenaEnemyCharacter : public ACharacter, public IAbilitySystemInterface {
@@ -20,15 +22,20 @@ public:
 #endif
 
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystem; }
 protected:
 	UPROPERTY(EditAnywhere, Category="Health")
-	FFloatInterval MaxHealthRange = FFloatInterval(50.0f, 150.0f);
+	FInt32Interval MaxHealthRange = FInt32Interval(50, 150);
 
 	UPROPERTY(EditAnywhere, Category="Health")
-	float MaxHealth = 0.0f;
+	int32 MaxHealth = 0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
+	TObjectPtr<UWidgetComponent> HealthWidget;
 private:
+	void OnHealthChanged(const FOnAttributeChangeData& Data) const;
 	void OnDeath(AActor* Killer);
 
 	UPROPERTY()

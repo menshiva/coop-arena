@@ -29,7 +29,7 @@ protected:
 	TSubclassOf<UGameplayEffect> DamageEffect;
 
 	UPROPERTY(EditDefaultsOnly, Category="Attack")
-	FFloatInterval DamageRange = FFloatInterval(10.0f, 20.0f);
+	FInt32Interval DamageRange = FInt32Interval(10, 20);
 private:
 	UFUNCTION()
 	void OnAttackEvent(FGameplayEventData Payload);

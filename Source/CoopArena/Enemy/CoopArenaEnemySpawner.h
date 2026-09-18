@@ -20,6 +20,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category="Spawn")
 	FFloatInterval FallHeightRange = FFloatInterval(1000.0f, 2000.0f);
+
+	UPROPERTY(EditDefaultsOnly, Category="Spawn")
+	int32 EnemyNum = 1;
 private:
 	UFUNCTION()
 	void OnEnemyDestroyed(AActor* Enemy);

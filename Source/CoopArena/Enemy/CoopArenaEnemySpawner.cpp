@@ -11,7 +11,9 @@ ACoopArenaEnemySpawner::ACoopArenaEnemySpawner() {
 
 void ACoopArenaEnemySpawner::BeginPlay() {
 	Super::BeginPlay();
-	SpawnEnemy();
+
+	for (int32 i = 0; i < EnemyNum; ++i)
+		SpawnEnemy();
 }
 
 void ACoopArenaEnemySpawner::SpawnEnemy() {

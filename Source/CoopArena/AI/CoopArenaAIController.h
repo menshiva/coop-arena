@@ -1,12 +1,12 @@
 #pragma once
 
-#include "AIController.h"
+#include "DetourCrowdAIController.h"
 #include "CoopArenaAIController.generated.h"
 
 class UBehaviorTree;
 
 UCLASS(Abstract)
-class ACoopArenaAIController : public AAIController {
+class ACoopArenaAIController : public ADetourCrowdAIController {
 	GENERATED_BODY()
 protected:
 	virtual void OnPossess(APawn* InPawn) override;

@@ -23,6 +23,10 @@ public:
 
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
+	virtual void NotifyHit(
+		UPrimitiveComponent* MyComp, AActor* Other, UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation,
+		FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit
+	) override;
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystem; }
 protected:
@@ -31,6 +35,21 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category="Health")
 	int32 MaxHealth = 0;
+
+	UPROPERTY(EditAnywhere, Category="Movement")
+	FFloatInterval BaseSpeedRange = FFloatInterval(400.0f, 650.0f);
+
+	UPROPERTY(EditAnywhere, Category="Movement")
+	float BaseSpeed = 0.0f;
+
+	UPROPERTY(EditAnywhere, Category="Movement")
+	FFloatInterval SpeedPercentByDistanceRange = FFloatInterval(-0.15f, +0.15f);
+
+	UPROPERTY(EditAnywhere, Category="Movement")
+	FFloatInterval SpeedDistanceRange = FFloatInterval(300.0f, 1500.0f);
+
+	UPROPERTY(EditAnywhere, Category="Movement")
+	float PushSpeed = 350.0f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	TObjectPtr<UWidgetComponent> HealthWidget;

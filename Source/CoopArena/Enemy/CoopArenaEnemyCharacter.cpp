@@ -3,6 +3,7 @@
 #include "AbilitySystem/CoopArenaAttributeSet.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerState.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -20,12 +21,14 @@ ACoopArenaEnemyCharacter::ACoopArenaEnemyCharacter() {
 void ACoopArenaEnemyCharacter::PostActorCreated() {
 	Super::PostActorCreated();
 	MaxHealth = FMath::RandRange(MaxHealthRange.Min, MaxHealthRange.Max);
+	BaseSpeed = FMath::RandRange(BaseSpeedRange.Min, BaseSpeedRange.Max);
 }
 
 #if WITH_EDITOR
 void ACoopArenaEnemyCharacter::PostEditImport() {
 	Super::PostEditImport();
 	MaxHealth = FMath::RandRange(MaxHealthRange.Min, MaxHealthRange.Max);
+	BaseSpeed = FMath::RandRange(BaseSpeedRange.Min, BaseSpeedRange.Max);
 }
 #endif
 
@@ -49,6 +52,29 @@ void ACoopArenaEnemyCharacter::Tick(const float DeltaSeconds) {
 
 	if (const auto Camera = UGameplayStatics::GetPlayerCameraManager(this, 0))
 		HealthWidget->SetWorldRotation((Camera->GetCameraLocation() - HealthWidget->GetComponentLocation()).Rotation());
+
+	if (const auto PlayerPtr = UGameplayStatics::GetPlayerPawn(this, 0)) {
+		// far from the player - faster, close - slower
+		const float Distance = FVector::Dist2D(GetActorLocation(), PlayerPtr->GetActorLocation());
+		const float Alpha = FMath::Clamp(FMath::GetRangePct(SpeedDistanceRange.Min, SpeedDistanceRange.Max, Distance), 0.0f, 1.0f);
+		GetCharacterMovement()->MaxWalkSpeed = BaseSpeed * (1.0f + SpeedPercentByDistanceRange.Interpolate(Alpha));
+	}
+}
+
+void ACoopArenaEnemyCharacter::NotifyHit(
+	UPrimitiveComponent* MyComp, AActor* Other, UPrimitiveComponent* OtherComp, const bool bSelfMoved, const FVector HitLocation,
+	const FVector HitNormal, const FVector NormalImpulse, const FHitResult& Hit
+) {
+	Super::NotifyHit(MyComp, Other, OtherComp, bSelfMoved, HitLocation, HitNormal, NormalImpulse, Hit);
+
+	if (bSelfMoved || !Cast<APawn>(Other))
+		return;
+
+	auto& Velocity = GetCharacterMovement()->Velocity;
+	const auto Direction = HitNormal.GetSafeNormal2D();
+	const double Along = FVector::DotProduct(Velocity, Direction);
+	if (Along < PushSpeed)
+		Velocity += Direction * (PushSpeed - Along);
 }
 
 void ACoopArenaEnemyCharacter::OnHealthChanged(const FOnAttributeChangeData&) const {

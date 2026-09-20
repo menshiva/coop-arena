@@ -6,6 +6,11 @@
 
 static const FName TargetActorKey(TEXT("TargetActor"));
 
+void ACoopArenaAIController::SetCrowdSeparation(const bool bEnable) const {
+	if (const auto CrowdPtr = Cast<UCrowdFollowingComponent>(GetPathFollowingComponent()))
+		CrowdPtr->SetCrowdSeparation(bEnable);
+}
+
 void ACoopArenaAIController::OnPossess(APawn* InPawn) {
 	Super::OnPossess(InPawn);
 
@@ -13,7 +18,8 @@ void ACoopArenaAIController::OnPossess(APawn* InPawn) {
 		CharacterPtr->LandedDelegate.AddDynamic(this, &ACoopArenaAIController::OnLanded);
 
 	if (const auto CrowdPtr = Cast<UCrowdFollowingComponent>(GetPathFollowingComponent()))
-		CrowdPtr->SetCrowdSeparation(true);
+		CrowdPtr->SetCrowdSeparationWeight(CrowdSeparationWeight);
+	SetCrowdSeparation(true);
 }
 
 void ACoopArenaAIController::OnLanded(const FHitResult&) {

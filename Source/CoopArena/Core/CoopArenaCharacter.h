@@ -8,6 +8,7 @@
 class UInputAction;
 class UCoopArenaGameplayAbility;
 class UAbilitySystemComponent;
+class ACoopArenaAttackRing;
 class USpringArmComponent;
 class UCameraComponent;
 struct FInputActionValue;
@@ -36,10 +37,14 @@ class ACoopArenaCharacter : public ACharacter, public IAbilitySystemInterface {
 public:
 	ACoopArenaCharacter();
 
+	virtual void BeginPlay() override;
+	virtual void EndPlay(EEndPlayReason::Type EndPlayReason) override;
+
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystem.Get(); }
+	FORCEINLINE ACoopArenaAttackRing* GetAttackRing() const { return AttackRing; }
 protected:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
@@ -67,9 +72,15 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category="Abilities")
 	TSubclassOf<UGameplayEffect> InitStatsEffect;
+
+	UPROPERTY(EditDefaultsOnly, Category="AI")
+	TSubclassOf<ACoopArenaAttackRing> AttackRingClass;
 private:
 	void OnAbilityInput(FGameplayTag AbilityTag);
 
 	UPROPERTY()
 	TWeakObjectPtr<UAbilitySystemComponent> AbilitySystem;
+
+	UPROPERTY()
+	TObjectPtr<ACoopArenaAttackRing> AttackRing;
 };

@@ -20,11 +20,10 @@ void UCoopArenaControlHintWidget::NativeOnInitialized() {
 }
 
 void UCoopArenaControlHintWidget::OnCooldownTagChanged(const FGameplayTag Tag, const int32 Count) {
-	if (Count == 0)
-		return;
-
-	const auto Cooldowns = AbilitySystem->GetActiveEffectsTimeRemainingAndDuration(
-		FGameplayEffectQuery::MakeQuery_MatchAnyOwningTags(FGameplayTagContainer(Tag))
-	);
-	OnCooldownStarted(Tag, Cooldowns.IsEmpty() ? 0.0f : Cooldowns[0].Value);
+	if (Count > 0) {
+		const auto Cooldowns = AbilitySystem->GetActiveEffectsTimeRemainingAndDuration(
+			FGameplayEffectQuery::MakeQuery_MatchAnyOwningTags(FGameplayTagContainer(Tag))
+		);
+		OnCooldownStarted(Tag, Cooldowns.IsEmpty() ? 0.0f : Cooldowns[0].Value);
+	}
 }

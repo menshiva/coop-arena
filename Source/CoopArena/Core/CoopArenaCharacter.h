@@ -9,8 +9,8 @@ class UInputAction;
 class UCoopArenaGameplayAbility;
 class UAbilitySystemComponent;
 class USpringArmComponent;
-class UCameraComponent;
 struct FInputActionValue;
+class UCameraComponent;
 class UGameplayEffect;
 
 USTRUCT()

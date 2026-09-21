@@ -19,6 +19,9 @@ public:
 		float RepackingFor = 0.0f;
 		uint32 RepackingDeathCount = 0;
 
+		// which side of the player the arc goes: true - his right, false - his left
+		bool bRightOrbitSide = true;
+
 		uint8 OffNavmeshTicks = 0;
 	};
 
@@ -28,6 +31,8 @@ protected:
 	virtual void TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
 
 	static bool HandleOffNavmesh(const UNavigationSystemV1* NavSystem, ACoopArenaEnemyCharacter& Enemy, FMemory& Memory);
+
+	TOptional<FVector> ChasePoint(const UNavigationSystemV1* NavSystem, ACoopArenaEnemyCharacter& Enemy, const AActor& Player, FMemory& Memory) const;
 
 	bool IsArrived(ACoopArenaEnemyCharacter& Enemy, const AActor& Player, FMemory& Memory, float DeltaSeconds) const;
 
@@ -39,6 +44,27 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category="Blackboard")
 	FBlackboardKeySelector ArrivedKey;
+
+	// bearing of the enemy in the player's frame of motion: 0 - ahead of him, 90 - at his side, 180 - behind;
+	// behind this one an interceptor starts going around the player
+	UPROPERTY(EditAnywhere, Category="Chase", meta=(ClampMin=0, ClampMax=180))
+	float ArcStartBearing = 110.0f;
+
+	// where the arc ends and the attack starts (for intercept role)
+	UPROPERTY(EditAnywhere, Category="Chase", meta=(ClampMin=0, ClampMax=180))
+	float InterceptArcEndBearing = 70.0f;
+
+	// where the arc ends and the attack starts (for counter run role)
+	UPROPERTY(EditAnywhere, Category="Chase", meta=(ClampMin=0, ClampMax=180))
+	float CounterRunArcEndBearing = 20.0f;
+
+	// how far along the arc the next point is put
+	UPROPERTY(EditAnywhere, Category="Chase", meta=(ClampMin=0))
+	float ArcStepDistance = 400.0f;
+
+	// the arc point is projected to the navmesh with this extent
+	UPROPERTY(EditAnywhere, Category="Chase")
+	FVector ProjectionExtent = FVector(100.0, 100.0, 250.0);
 
 	UPROPERTY(EditAnywhere, Category="Arrival", meta=(ClampMin=0))
 	float TouchPackingGapDistance = 75.0f;

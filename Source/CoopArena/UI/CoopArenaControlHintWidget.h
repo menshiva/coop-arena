@@ -16,7 +16,7 @@ protected:
 	void OnInputDeviceChanged(bool bGamepad);
 
 	UFUNCTION(BlueprintImplementableEvent, Category="Control Hint")
-	void OnCooldownStarted(FGameplayTag Tag, float Duration);
+	void OnCooldownStarted(const FGameplayTag& Tag, float Duration);
 private:
 	void OnCooldownTagChanged(FGameplayTag Tag, int32 Count);
 

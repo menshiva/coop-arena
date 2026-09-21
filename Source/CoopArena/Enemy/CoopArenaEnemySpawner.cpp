@@ -1,17 +1,17 @@
 #include "CoopArenaEnemySpawner.h"
-#include "CoopArenaEnemyCharacter.h"
+#include "EngineUtils.h"
 #include "NavigationSystem.h"
-#include "Kismet/GameplayStatics.h"
 
 ACoopArenaEnemySpawner::ACoopArenaEnemySpawner() {
 	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bStartWithTickEnabled = false;
+	PrimaryActorTick.bAllowTickOnDedicatedServer = false;
 
-	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+	SetRootComponent(CreateDefaultSubobject<USceneComponent>(TEXT("Root")));
 }
 
 void ACoopArenaEnemySpawner::BeginPlay() {
 	Super::BeginPlay();
-
 	for (int32 i = 0; i < EnemyNum; ++i)
 		SpawnEnemy();
 }
@@ -20,7 +20,8 @@ void ACoopArenaEnemySpawner::SpawnEnemy() {
 	if (!EnemyClass)
 		return;
 
-	const auto NavSystem = UNavigationSystemV1::GetCurrent(GetWorld());
+	const auto World = GetWorld();
+	const auto NavSystem = UNavigationSystemV1::GetCurrent(World);
 	if (!NavSystem)
 		return;
 
@@ -28,13 +29,37 @@ void ACoopArenaEnemySpawner::SpawnEnemy() {
 	if (!NavSystem->GetRandomPoint(Point))
 		return;
 
-	const auto Height = FMath::FRandRange(FallHeightRange.Min, FallHeightRange.Max);
-	const auto Enemy = GetWorld()->SpawnActor<ACoopArenaEnemyCharacter>(
-		EnemyClass, Point.Location + FVector(0.0f, 0.0f, Height), FRotator::ZeroRotator
-	);
+	// deferred: the stats must be on the enemy before its BeginPlay
+	const FTransform Transform(Point.Location + FVector(0.0f, 0.0f, FMath::FRandRange(FallHeightRange.Min, FallHeightRange.Max)));
+	const auto Enemy = World->SpawnActorDeferred<ACoopArenaEnemyCharacter>(EnemyClass, Transform);
+	if (!Enemy)
+		return;
 
-	if (Enemy)
-		Enemy->OnDestroyed.AddDynamic(this, &ACoopArenaEnemySpawner::OnEnemyDestroyed);
+	Enemy->SetStats(GetEnemyNewRolledStats());
+	Enemy->FinishSpawning(Transform);
+	Enemy->OnDestroyed.AddDynamic(this, &ACoopArenaEnemySpawner::OnEnemyDestroyed);
+}
+
+FCoopArenaEnemyStats ACoopArenaEnemySpawner::GetEnemyNewRolledStats() const {
+	FCoopArenaEnemyStats Stats;
+	Stats.MaxHealth = FMath::RandRange(MaxHealthRange.Min, MaxHealthRange.Max);
+
+	const float RoleRoll = FMath::FRand();
+	if (RoleRoll < CounterRunShare) {
+		Stats.ChaseRole = ECoopArenaEnemyChaseRole::CounterRun;
+		Stats.OvertakeOrbitRadius = FMath::RandRange(CounterRunOrbitRadiusRange.Min, CounterRunOrbitRadiusRange.Max);
+		Stats.OvertakeSpeedFactor = FMath::RandRange(CounterRunOvertakeSpeedFactorRange.Min, CounterRunOvertakeSpeedFactorRange.Max);
+	}
+	else if (RoleRoll < CounterRunShare + InterceptShare) {
+		Stats.ChaseRole = ECoopArenaEnemyChaseRole::Intercept;
+		Stats.OvertakeOrbitRadius = FMath::RandRange(InterceptOrbitRadiusRange.Min, InterceptOrbitRadiusRange.Max);
+		Stats.OvertakeSpeedFactor = FMath::RandRange(InterceptOvertakeSpeedFactorRange.Min, InterceptOvertakeSpeedFactorRange.Max);
+	}
+	else
+		Stats.ChaseRole = ECoopArenaEnemyChaseRole::Tail;
+
+	Stats.SpeedFactor = FMath::RandRange(SpeedFactorRange.Min, SpeedFactorRange.Max);
+	return Stats;
 }
 
 void ACoopArenaEnemySpawner::OnEnemyDestroyed(AActor*) {
@@ -45,7 +70,7 @@ void ACoopArenaEnemySpawner::OnEnemyDestroyed(AActor*) {
 static FAutoConsoleCommandWithWorld GCoopArenaSpawnEnemy(
 	TEXT("CoopArena.SpawnEnemy"), TEXT("Spawns enemy."),
 	FConsoleCommandWithWorldDelegate::CreateLambda([] (const UWorld* World) {
-		if (const auto Spawner = Cast<ACoopArenaEnemySpawner>(UGameplayStatics::GetActorOfClass(World, ACoopArenaEnemySpawner::StaticClass())))
-			Spawner->SpawnEnemy();
+		if (const TActorIterator<ACoopArenaEnemySpawner> It(World); It)
+			It->SpawnEnemy();
 	})
 );

@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include "CoreMinimal.h"
 #include "GameplayEffectTypes.h"
 #include "GameFramework/Actor.h"
 #include "CoopArenaProjectileManager.generated.h"
@@ -35,7 +34,7 @@ public:
 	);
 
 	void OnBallImpact(int32 SlotIndex, const FHitResult& Hit);
-	void OnBallStopped(int32 SlotIndex);
+	void OnBallStopped(int32 SlotIndex, bool bCreateIsmCopy);
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="Ball")
 	TSubclassOf<UStaticMeshComponent> BallComponentClass;
@@ -43,7 +42,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Ball")
 	TSubclassOf<UCoopArenaProjectileMovement> MovementComponentClass;
 
-	UPROPERTY(EditDefaultsOnly, Category="Ball")
+	UPROPERTY(EditInstanceOnly, Category="Ball", meta=(ClampMin=1))
 	int32 BallsLimit = 500;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")

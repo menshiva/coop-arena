@@ -39,6 +39,5 @@ private:
 	UFUNCTION()
 	void OnAttackEvent(FGameplayEventData Payload);
 
-	UPROPERTY()
 	TWeakObjectPtr<ACoopArenaProjectileManager> ProjectileManagerCache;
 };

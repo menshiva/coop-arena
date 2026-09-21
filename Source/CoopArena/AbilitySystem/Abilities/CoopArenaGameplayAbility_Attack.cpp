@@ -41,6 +41,8 @@ void UCoopArenaGameplayAbility_Attack::OnAttackEvent(FGameplayEventData) {
 		ProjectileManagerCache = Cast<ACoopArenaProjectileManager>(
 			UGameplayStatics::GetActorOfClass(this, ACoopArenaProjectileManager::StaticClass())
 		);
+		if (!ProjectileManagerCache.IsValid())
+			return;
 	}
 
 	FVector ViewLocation;

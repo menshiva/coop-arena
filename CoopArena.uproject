@@ -387,10 +387,6 @@
 			"Enabled": false
 		},
 		{
-			"Name": "ModelingToolsEditorMode",
-			"Enabled": false
-		},
-		{
 			"Name": "SequenceNavigator",
 			"Enabled": false
 		},

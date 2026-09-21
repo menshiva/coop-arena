@@ -34,6 +34,7 @@ ACoopArenaCharacter::ACoopArenaCharacter() {
 
 void ACoopArenaCharacter::PossessedBy(AController* NewController) {
 	Super::PossessedBy(NewController);
+
 	if (const auto StatePtr = GetPlayerState<ACoopArenaPlayerState>()) {
 		AbilitySystem = StatePtr->GetAbilitySystemComponent();
 		AbilitySystem->InitAbilityActorInfo(StatePtr, this);

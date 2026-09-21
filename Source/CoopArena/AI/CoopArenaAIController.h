@@ -13,9 +13,6 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category="AI")
 	TObjectPtr<UBehaviorTree> BehaviorTree;
-
-	UPROPERTY(EditDefaultsOnly, Category="AI")
-	float CrowdSeparationWeight = 2.0f;
 private:
 	UFUNCTION()
 	void OnLanded(const FHitResult& Hit);

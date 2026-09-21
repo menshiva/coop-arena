@@ -4,11 +4,18 @@
 #include "BehaviorTree/Blackboard/BlackboardKeyType_Object.h"
 #include "BehaviorTree/Blackboard/BlackboardKeyType_Vector.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Core/CoopArenaGameState.h"
 #include "Enemy/CoopArenaEnemyCharacter.h"
 #include "Engine/OverlapResult.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "NavigationSystem.h"
-#include "Core/CoopArenaGameState.h"
+
+#if ENABLE_DRAW_DEBUG
+static TAutoConsoleVariable CVarDebugApproach(
+	TEXT("CoopArena.DebugApproach"), false,
+	TEXT("Draws where each enemy runs")
+);
+#endif
 
 UBTService_CoopArenaApproach::UBTService_CoopArenaApproach() {
 	NodeName = "Approach";
@@ -50,8 +57,10 @@ void UBTService_CoopArenaApproach::TickNode(UBehaviorTreeComponent& OwnerComp, u
 	if (!EnemyPtr || !PlayerPtr) {
 		BlackboardPtr->ClearValue(LocationKeyID);
 		BlackboardPtr->ClearValue(ArrivedKeyID);
-		if (EnemyPtr)
+		if (EnemyPtr) {
 			EnemyPtr->SetArrivedToStandingPlayer(false);
+			EnemyPtr->SetOvertaking(false);
+		}
 		Memory.StalledFor = 0.0f;
 		return;
 	}
@@ -61,10 +70,88 @@ void UBTService_CoopArenaApproach::TickNode(UBehaviorTreeComponent& OwnerComp, u
 		return;
 
 	// approach
-	BlackboardPtr->SetValue<UBlackboardKeyType_Vector>(LocationKeyID, PlayerPtr->GetActorLocation());
+	const auto PointOpt = ChasePoint(NavSystem, *EnemyPtr, *PlayerPtr, Memory);
+	if (const auto PointPtr = PointOpt.GetPtrOrNull())
+		BlackboardPtr->SetValue<UBlackboardKeyType_Vector>(LocationKeyID, *PointPtr);
+	else
+		BlackboardPtr->ClearValue(LocationKeyID);
 
 	// arrived
-	BlackboardPtr->SetValue<UBlackboardKeyType_Bool>(ArrivedKeyID, IsArrived(*EnemyPtr, *PlayerPtr, Memory, DeltaSeconds));
+	const bool bArrived = IsArrived(*EnemyPtr, *PlayerPtr, Memory, DeltaSeconds);
+	BlackboardPtr->SetValue<UBlackboardKeyType_Bool>(ArrivedKeyID, bArrived);
+
+#if ENABLE_DRAW_DEBUG
+	if (CVarDebugApproach.GetValueOnGameThread()) {
+		const auto World = OwnerComp.GetWorld();
+		const auto EnemyPos = EnemyPtr->GetActorLocation();
+		const auto PlayerPos = PlayerPtr->GetActorLocation();
+		const float Life = Interval + RandomDeviation;
+		const FColor Color = !PointOpt.IsSet() ? FColor::White : EnemyPtr->GetChaseRole() == ECoopArenaEnemyChaseRole::CounterRun ? FColor::Cyan : FColor::Yellow;
+		DrawDebugLine(World, EnemyPos, PointOpt.Get(PlayerPos), Color, false, Life, 0, 2.0f);
+		if (PointOpt.IsSet())
+			DrawDebugSphere(World, PointOpt.GetValue(), 30.0f, 8, Color, false, Life);
+		if (bArrived)
+			DrawDebugSphere(World, EnemyPos + FVector(0.0, 0.0, 120.0), 15.0f, 8, FColor::Red, false, Life);
+	}
+#endif
+}
+
+TOptional<FVector> UBTService_CoopArenaApproach::ChasePoint(const UNavigationSystemV1* NavSystem, ACoopArenaEnemyCharacter& Enemy, const AActor& Player, FMemory& Memory) const {
+	auto Velocity = FVector2D(Player.GetVelocity());
+	const auto Role = Enemy.GetChaseRole();
+	if (!NavSystem || Role == ECoopArenaEnemyChaseRole::Tail || Velocity.IsNearlyZero()) {
+		// a tail and everyone around a standing player go straight at him
+		Enemy.SetOvertaking(false);
+		return {};
+	}
+
+	// a dash sets the velocity by root motion above MaxWalkSpeed - clamp it
+	if (const auto CharacterPtr = Cast<ACharacter>(&Player))
+		Velocity = Velocity.GetClampedToMaxSize(CharacterPtr->GetCharacterMovement()->MaxWalkSpeed);
+
+	// the enemy in the player's frame of motion: bearing 0 - ahead of him, 180 - behind, and the side he is on
+	const auto PlayerPos = Player.GetActorLocation();
+	const auto EnemyPos = Enemy.GetActorLocation();
+	const auto Forward = Velocity.GetSafeNormal();
+	const auto Relative = FVector2D(EnemyPos - PlayerPos);
+	const double Bearing = FMath::RadiansToDegrees(FMath::Acos(FVector2D::DotProduct(Forward, Relative.GetSafeNormal())));
+	const double Lateral = FVector2D::CrossProduct(Forward, Relative);
+
+	// update the side if not right behind the player
+	static constexpr double SideDeadband = 50.0;
+	if (FMath::Abs(Lateral) > SideDeadband)
+		Memory.bRightOrbitSide = Lateral > 0.0;
+
+	// caught behind - go around the player on the role's arc up to the role's bearing, then attack from there (the actor branch)
+	const double ArcEndBearing = Role == ECoopArenaEnemyChaseRole::CounterRun ? CounterRunArcEndBearing : InterceptArcEndBearing;
+	if (!Enemy.IsOvertaking() && Bearing > ArcStartBearing)
+		Enemy.SetOvertaking(true);
+	else if (Enemy.IsOvertaking() && Bearing <= ArcEndBearing)
+		Enemy.SetOvertaking(false);
+	if (!Enemy.IsOvertaking())
+		return {};
+
+	const double OrbitSize = static_cast<double>(Memory.bRightOrbitSide) * 2.0 - 1.0;
+	const double OrbitRadius = Enemy.GetOvertakeOrbitRadius();
+	const double NextBearing = Bearing - (OrbitRadius > 0.0 ? FMath::RadiansToDegrees(ArcStepDistance / OrbitRadius) : 0.0);
+
+	// offset pursuit: https://www.red3d.com/cwr/steer/gdc99/#:~:text=Figure%205%3A%20offset%20pursuit
+	// the target is a point held at an offset in the moving target's frame
+	// the point moves with the player - aim where it will be when the enemy gets there (pursuit lead, T = distance / speed)
+	auto Point = FVector2D(PlayerPos) + Forward.GetRotated(OrbitSize * NextBearing) * OrbitRadius;
+	if (const double EnemySpeed = Enemy.GetCharacterMovement()->MaxWalkSpeed; EnemySpeed > 0.0) {
+		// https://sourceforge.net/p/opensteer/code/HEAD/tree/trunk/include/OpenSteer/SteerLibrary.h#l936
+		const double T = FVector2D::Distance(Point, FVector2D(EnemyPos)) / EnemySpeed;
+
+		static constexpr double LeadTimeMax = 1.0; // how far ahead the moving arc point is aimed at
+		Point += Velocity * FMath::Min(T, LeadTimeMax);
+	}
+
+	FNavLocation Projected;
+	if (NavSystem->ProjectPointToNavigation(FVector(Point.X, Point.Y, PlayerPos.Z), Projected, ProjectionExtent))
+		return Projected.Location;
+
+	return {};
 }
 
 bool UBTService_CoopArenaApproach::HandleOffNavmesh(const UNavigationSystemV1* NavSystem, ACoopArenaEnemyCharacter& Enemy, FMemory& Memory) {

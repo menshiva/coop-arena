@@ -8,8 +8,6 @@ class UBehaviorTree;
 UCLASS(Abstract)
 class ACoopArenaAIController : public ADetourCrowdAIController {
 	GENERATED_BODY()
-public:
-	void SetCrowdSeparation(bool bEnable) const;
 protected:
 	virtual void OnPossess(APawn* InPawn) override;
 

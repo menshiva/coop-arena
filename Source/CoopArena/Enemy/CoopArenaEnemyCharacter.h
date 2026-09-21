@@ -23,12 +23,11 @@ public:
 
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
-	virtual void NotifyHit(
-		UPrimitiveComponent* MyComp, AActor* Other, UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation,
-		FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit
-	) override;
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystem; }
+
+	FORCEINLINE bool IsArrivedToStandingPlayer() const { return bArrivedToStandingPlayer; }
+	FORCEINLINE void SetArrivedToStandingPlayer(const bool bValue) { bArrivedToStandingPlayer = bValue; }
 protected:
 	UPROPERTY(EditAnywhere, Category="Health")
 	FInt32Interval MaxHealthRange = FInt32Interval(50, 150);
@@ -48,9 +47,6 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Movement")
 	FFloatInterval SpeedDistanceRange = FFloatInterval(300.0f, 1500.0f);
 
-	UPROPERTY(EditAnywhere, Category="Movement")
-	float PushSpeed = 350.0f;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	TObjectPtr<UWidgetComponent> HealthWidget;
 private:
@@ -62,4 +58,6 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UCoopArenaAttributeSet> Attributes;
+
+	bool bArrivedToStandingPlayer = false;
 };

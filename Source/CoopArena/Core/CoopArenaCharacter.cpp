@@ -7,7 +7,6 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "AbilitySystem/Abilities/CoopArenaGameplayAbility.h"
-#include "AI/CoopArenaAttackRing.h"
 
 ACoopArenaCharacter::ACoopArenaCharacter() {
 	GetCapsuleComponent()->InitCapsuleSize(32.f, 90.0f);
@@ -31,23 +30,6 @@ ACoopArenaCharacter::ACoopArenaCharacter() {
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	// FollowCamera->bUsePawnControlRotation = false;
-}
-
-void ACoopArenaCharacter::BeginPlay() {
-	Super::BeginPlay();
-
-	if (AttackRingClass) {
-		FActorSpawnParameters Params;
-		Params.Owner = this;
-		AttackRing = GetWorld()->SpawnActor<ACoopArenaAttackRing>(AttackRingClass, GetActorLocation(), FRotator::ZeroRotator, Params);
-	}
-}
-
-void ACoopArenaCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason) {
-	if (AttackRing)
-		AttackRing->Destroy();
-
-	Super::EndPlay(EndPlayReason);
 }
 
 void ACoopArenaCharacter::PossessedBy(AController* NewController) {

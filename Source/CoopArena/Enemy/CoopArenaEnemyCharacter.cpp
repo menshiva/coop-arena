@@ -61,22 +61,6 @@ void ACoopArenaEnemyCharacter::Tick(const float DeltaSeconds) {
 	}
 }
 
-void ACoopArenaEnemyCharacter::NotifyHit(
-	UPrimitiveComponent* MyComp, AActor* Other, UPrimitiveComponent* OtherComp, const bool bSelfMoved, const FVector HitLocation,
-	const FVector HitNormal, const FVector NormalImpulse, const FHitResult& Hit
-) {
-	Super::NotifyHit(MyComp, Other, OtherComp, bSelfMoved, HitLocation, HitNormal, NormalImpulse, Hit);
-
-	if (bSelfMoved || !Cast<APawn>(Other))
-		return;
-
-	auto& Velocity = GetCharacterMovement()->Velocity;
-	const auto Direction = HitNormal.GetSafeNormal2D();
-	const double Along = FVector::DotProduct(Velocity, Direction);
-	if (Along < PushSpeed)
-		Velocity += Direction * (PushSpeed - Along);
-}
-
 void ACoopArenaEnemyCharacter::OnHealthChanged(const FOnAttributeChangeData&) const {
 	if (const auto Widget = Cast<UCoopArenaHealthWidget>(HealthWidget->GetWidget())) {
 		Widget->OnHealthChanged(FMath::RoundToInt(Attributes->GetHealth()), FMath::RoundToInt(Attributes->GetMaxHealth()));

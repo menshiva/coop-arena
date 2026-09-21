@@ -3,11 +3,18 @@
 #include "AbilitySystem/CoopArenaAttributeSet.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
+#include "Core/CoopArenaGameState.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerState.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "UI/CoopArenaHealthWidget.h"
+
+static uint32 GetEnemyDeathCount(const UWorld* World) {
+	if (const auto GameState = World->GetGameState<ACoopArenaGameState>())
+		return GameState->GetEnemyDeathCount();
+	return 0;
+}
 
 ACoopArenaEnemyCharacter::ACoopArenaEnemyCharacter() {
 	AbilitySystem = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystem"));
@@ -61,6 +68,19 @@ void ACoopArenaEnemyCharacter::Tick(const float DeltaSeconds) {
 	}
 }
 
+bool ACoopArenaEnemyCharacter::IsArrivedToStandingPlayer() const {
+	return bArrivedToStandingPlayer && EnemyDeathCountWhenArrived == GetEnemyDeathCount(GetWorld());
+}
+
+bool ACoopArenaEnemyCharacter::IsRepackingAfterDeath() const {
+	return bArrivedToStandingPlayer && EnemyDeathCountWhenArrived != GetEnemyDeathCount(GetWorld());
+}
+
+void ACoopArenaEnemyCharacter::SetArrivedToStandingPlayer(const bool bValue) {
+	bArrivedToStandingPlayer = bValue;
+	EnemyDeathCountWhenArrived = GetEnemyDeathCount(GetWorld());
+}
+
 void ACoopArenaEnemyCharacter::OnHealthChanged(const FOnAttributeChangeData&) const {
 	if (const auto Widget = Cast<UCoopArenaHealthWidget>(HealthWidget->GetWidget())) {
 		Widget->OnHealthChanged(FMath::RoundToInt(Attributes->GetHealth()), FMath::RoundToInt(Attributes->GetMaxHealth()));
@@ -79,6 +99,11 @@ void ACoopArenaEnemyCharacter::OnDeath(AActor* Killer) {
 			true, true, FLinearColor::Green, 5.0f
 		);
 	}
+
+	// only a death inside the standing crowd leaves a gap to re-pack into
+	if (bArrivedToStandingPlayer)
+		if (const auto GameState = GetWorld()->GetGameState<ACoopArenaGameState>())
+			GameState->NotifyEnemyDeath();
 
 	Destroy();
 }

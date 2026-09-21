@@ -16,7 +16,8 @@ public:
 
 	struct FMemory {
 		float StalledFor = 0.0f;
-		bool bArrived = false;
+		float RepackingFor = 0.0f;
+		uint32 RepackingDeathCount = 0;
 
 		uint8 OffNavmeshTicks = 0;
 	};
@@ -28,9 +29,7 @@ protected:
 
 	static bool HandleOffNavmesh(const UNavigationSystemV1* NavSystem, ACoopArenaEnemyCharacter& Enemy, FMemory& Memory);
 
-	static void Approach(UBlackboardComponent& Blackboard, const FBlackboard::FKey LocationKeyID, const AActor& Player);
-
-	bool IsArrived(const ACoopArenaEnemyCharacter& Enemy, const AActor& Player, FMemory& Memory, float DeltaSeconds) const;
+	bool IsArrived(ACoopArenaEnemyCharacter& Enemy, const AActor& Player, FMemory& Memory, float DeltaSeconds) const;
 
 	UPROPERTY(EditAnywhere, Category="Blackboard")
 	FBlackboardKeySelector TargetActorKey;
@@ -49,4 +48,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category="Arrival", meta=(ClampMin=0))
 	float TimeConsideredAsStall = 0.5f;
+
+	UPROPERTY(EditAnywhere, Category="Arrival", meta=(ClampMin=0))
+	float TimeToRepackAfterDeath = 0.5f;
 };

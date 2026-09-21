@@ -8,6 +8,13 @@
 #include "Engine/OverlapResult.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "NavigationSystem.h"
+#include "Core/CoopArenaGameState.h"
+
+static uint32 GetEnemyDeathCount(const UWorld* World) {
+	if (const auto GameState = World->GetGameState<ACoopArenaGameState>())
+		return GameState->GetEnemyDeathCount();
+	return 0;
+}
 
 UBTService_CoopArenaApproach::UBTService_CoopArenaApproach() {
 	NodeName = "Approach";
@@ -49,7 +56,8 @@ void UBTService_CoopArenaApproach::TickNode(UBehaviorTreeComponent& OwnerComp, u
 	if (!EnemyPtr || !PlayerPtr) {
 		BlackboardPtr->ClearValue(LocationKeyID);
 		BlackboardPtr->ClearValue(ArrivedKeyID);
-		Memory.bArrived = false;
+		if (EnemyPtr)
+			EnemyPtr->SetArrivedToStandingPlayer(false);
 		Memory.StalledFor = 0.0f;
 		return;
 	}
@@ -58,13 +66,11 @@ void UBTService_CoopArenaApproach::TickNode(UBehaviorTreeComponent& OwnerComp, u
 	if (!HandleOffNavmesh(NavSystem, *EnemyPtr, Memory))
 		return;
 
-	Approach(*BlackboardPtr, LocationKeyID, *PlayerPtr);
+	// approach
+	BlackboardPtr->SetValue<UBlackboardKeyType_Vector>(LocationKeyID, PlayerPtr->GetActorLocation());
 
-	{
-		const bool bArrived = IsArrived(*EnemyPtr, *PlayerPtr, Memory, DeltaSeconds);
-		EnemyPtr->SetArrivedToStandingPlayer(bArrived);
-		BlackboardPtr->SetValue<UBlackboardKeyType_Bool>(ArrivedKeyID, bArrived);
-	}
+	// arrived
+	BlackboardPtr->SetValue<UBlackboardKeyType_Bool>(ArrivedKeyID, IsArrived(*EnemyPtr, *PlayerPtr, Memory, DeltaSeconds));
 }
 
 bool UBTService_CoopArenaApproach::HandleOffNavmesh(const UNavigationSystemV1* NavSystem, ACoopArenaEnemyCharacter& Enemy, FMemory& Memory) {
@@ -90,28 +96,40 @@ bool UBTService_CoopArenaApproach::HandleOffNavmesh(const UNavigationSystemV1* N
 	return true;
 }
 
-void UBTService_CoopArenaApproach::Approach(UBlackboardComponent& Blackboard, const FBlackboard::FKey LocationKeyID, const AActor& Player) {
-	// TODO
-	Blackboard.SetValue<UBlackboardKeyType_Vector>(LocationKeyID, Player.GetActorLocation());
-}
-
-bool UBTService_CoopArenaApproach::IsArrived(const ACoopArenaEnemyCharacter& Enemy, const AActor& Player, FMemory& Memory, const float DeltaSeconds) const {
+bool UBTService_CoopArenaApproach::IsArrived(ACoopArenaEnemyCharacter& Enemy, const AActor& Player, FMemory& Memory, const float DeltaSeconds) const {
 	if (!Player.GetVelocity().IsNearlyZero() || !Enemy.GetCharacterMovement()->IsMovingOnGround()) {
-		Memory.bArrived = false;
+		Enemy.SetArrivedToStandingPlayer(false);
 		Memory.StalledFor = 0.0f;
 		return false;
 	}
-	if (Memory.bArrived)
+	if (Enemy.IsArrivedToStandingPlayer())
 		return true;
+
+	const auto Arrive = [&] {
+		Enemy.SetArrivedToStandingPlayer(true);
+		Memory.StalledFor = 0.0f;
+		return true;
+	};
 
 	if (Enemy.GetVelocity().SizeSquared2D() < FMath::Square(SpeedConsideredAsStall))
 		Memory.StalledFor += DeltaSeconds;
 	else
 		Memory.StalledFor = 0.0f;
 
-	if (Memory.StalledFor >= TimeConsideredAsStall) {
-		Memory.bArrived = true;
-		return true;
+	if (Memory.StalledFor >= TimeConsideredAsStall)
+		return Arrive();
+
+	// an enemy death dropped the latch - give the crowd a moment to move into the gap before the neighbors anchor it again
+	bool bNeighboursAnchor = true;
+	if (Enemy.IsRepackingAfterDeath()) {
+		const uint32 DeathCount = GetEnemyDeathCount(GetWorld());
+		if (Memory.RepackingDeathCount != DeathCount) {
+			// every further death restarts the window
+			Memory.RepackingDeathCount = DeathCount;
+			Memory.RepackingFor = 0.0f;
+		}
+		Memory.RepackingFor += DeltaSeconds;
+		bNeighboursAnchor = Memory.RepackingFor >= TimeToRepackAfterDeath;
 	}
 
 	TArray<FOverlapResult> Overlaps;
@@ -121,17 +139,13 @@ bool UBTService_CoopArenaApproach::IsArrived(const ACoopArenaEnemyCharacter& Ene
 		FCollisionQueryParams(NAME_None, false, &Enemy)
 	);
 	for (const auto& Overlap : Overlaps) {
-		if (Overlap.GetActor() == &Player) {
-			Memory.bArrived = true;
-			return true;
-		}
+		if (Overlap.GetActor() == &Player)
+			return Arrive();
 
-		if (const auto OtherPtr = Cast<ACoopArenaEnemyCharacter>(Overlap.GetActor())) {
-			if (OtherPtr->IsArrivedToStandingPlayer()) {
-				Memory.bArrived = true;
-				return true;
-			}
-		}
+		if (bNeighboursAnchor)
+			if (const auto OtherPtr = Cast<ACoopArenaEnemyCharacter>(Overlap.GetActor()))
+				if (OtherPtr->IsArrivedToStandingPlayer())
+					return Arrive();
 	}
 
 	return false;

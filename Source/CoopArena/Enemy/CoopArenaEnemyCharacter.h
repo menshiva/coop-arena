@@ -26,8 +26,9 @@ public:
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystem; }
 
-	FORCEINLINE bool IsArrivedToStandingPlayer() const { return bArrivedToStandingPlayer; }
-	FORCEINLINE void SetArrivedToStandingPlayer(const bool bValue) { bArrivedToStandingPlayer = bValue; }
+	bool IsArrivedToStandingPlayer() const;
+	bool IsRepackingAfterDeath() const;
+	void SetArrivedToStandingPlayer(bool bValue);
 protected:
 	UPROPERTY(EditAnywhere, Category="Health")
 	FInt32Interval MaxHealthRange = FInt32Interval(50, 150);
@@ -60,4 +61,5 @@ private:
 	TObjectPtr<UCoopArenaAttributeSet> Attributes;
 
 	bool bArrivedToStandingPlayer = false;
+	uint32 EnemyDeathCountWhenArrived = 0;
 };

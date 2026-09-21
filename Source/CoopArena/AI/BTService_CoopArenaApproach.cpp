@@ -10,12 +10,6 @@
 #include "NavigationSystem.h"
 #include "Core/CoopArenaGameState.h"
 
-static uint32 GetEnemyDeathCount(const UWorld* World) {
-	if (const auto GameState = World->GetGameState<ACoopArenaGameState>())
-		return GameState->GetEnemyDeathCount();
-	return 0;
-}
-
 UBTService_CoopArenaApproach::UBTService_CoopArenaApproach() {
 	NodeName = "Approach";
 	Interval = 0.25f;
@@ -122,7 +116,7 @@ bool UBTService_CoopArenaApproach::IsArrived(ACoopArenaEnemyCharacter& Enemy, co
 	// an enemy death dropped the latch - give the crowd a moment to move into the gap before the neighbors anchor it again
 	bool bNeighboursAnchor = true;
 	if (Enemy.IsRepackingAfterDeath()) {
-		const uint32 DeathCount = GetEnemyDeathCount(GetWorld());
+		const uint32 DeathCount = ACoopArenaGameState::GetEnemyDeathCount(GetWorld());
 		if (Memory.RepackingDeathCount != DeathCount) {
 			// every further death restarts the window
 			Memory.RepackingDeathCount = DeathCount;

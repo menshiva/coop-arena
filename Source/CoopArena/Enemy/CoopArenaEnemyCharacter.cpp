@@ -10,12 +10,6 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "UI/CoopArenaHealthWidget.h"
 
-static uint32 GetEnemyDeathCount(const UWorld* World) {
-	if (const auto GameState = World->GetGameState<ACoopArenaGameState>())
-		return GameState->GetEnemyDeathCount();
-	return 0;
-}
-
 ACoopArenaEnemyCharacter::ACoopArenaEnemyCharacter() {
 	AbilitySystem = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystem"));
 	Attributes = CreateDefaultSubobject<UCoopArenaAttributeSet>(TEXT("Attributes"));
@@ -69,16 +63,16 @@ void ACoopArenaEnemyCharacter::Tick(const float DeltaSeconds) {
 }
 
 bool ACoopArenaEnemyCharacter::IsArrivedToStandingPlayer() const {
-	return bArrivedToStandingPlayer && EnemyDeathCountWhenArrived == GetEnemyDeathCount(GetWorld());
+	return bArrivedToStandingPlayer && EnemyDeathCountWhenArrived == ACoopArenaGameState::GetEnemyDeathCount(GetWorld());
 }
 
 bool ACoopArenaEnemyCharacter::IsRepackingAfterDeath() const {
-	return bArrivedToStandingPlayer && EnemyDeathCountWhenArrived != GetEnemyDeathCount(GetWorld());
+	return bArrivedToStandingPlayer && EnemyDeathCountWhenArrived != ACoopArenaGameState::GetEnemyDeathCount(GetWorld());
 }
 
 void ACoopArenaEnemyCharacter::SetArrivedToStandingPlayer(const bool bValue) {
 	bArrivedToStandingPlayer = bValue;
-	EnemyDeathCountWhenArrived = GetEnemyDeathCount(GetWorld());
+	EnemyDeathCountWhenArrived = ACoopArenaGameState::GetEnemyDeathCount(GetWorld());
 }
 
 void ACoopArenaEnemyCharacter::OnHealthChanged(const FOnAttributeChangeData&) const {

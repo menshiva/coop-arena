@@ -14,7 +14,7 @@ void UCoopArenaControlHintWidget::NativeOnInitialized() {
 
 	AbilitySystem = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetOwningPlayerState());
 	if (AbilitySystem.IsValid()) {
-		AbilitySystem->RegisterGameplayTagEvent(CoopArena_Cooldown_Attack).AddUObject(this, &UCoopArenaControlHintWidget::OnCooldownTagChanged);
+		AbilitySystem->RegisterGameplayTagEvent(CoopArena_Cooldown_Attack_Player_Basic).AddUObject(this, &UCoopArenaControlHintWidget::OnCooldownTagChanged);
 		AbilitySystem->RegisterGameplayTagEvent(CoopArena_Cooldown_Dash).AddUObject(this, &UCoopArenaControlHintWidget::OnCooldownTagChanged);
 	}
 }

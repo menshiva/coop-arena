@@ -2,8 +2,8 @@
 
 #include "NativeGameplayTags.h"
 
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Ability_Attack);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Cooldown_Attack);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Ability_Attack_Player_Basic);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Cooldown_Attack_Player_Basic);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Ability_Dash);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Cooldown_Dash);

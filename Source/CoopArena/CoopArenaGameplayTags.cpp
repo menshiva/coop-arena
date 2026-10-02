@@ -1,7 +1,7 @@
 ﻿#include "CoopArenaGameplayTags.h"
 
-UE_DEFINE_GAMEPLAY_TAG_COMMENT(CoopArena_Ability_Attack, "CoopArena.Ability.Attack", "Fires the simple attack.");
-UE_DEFINE_GAMEPLAY_TAG_COMMENT(CoopArena_Cooldown_Attack, "CoopArena.Cooldown.Attack", "Blocks the simple attack.");
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(CoopArena_Ability_Attack_Player_Basic, "CoopArena.Ability.Attack.Player.Basic", "Fires the player's basic attack.");
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(CoopArena_Cooldown_Attack_Player_Basic, "CoopArena.Cooldown.Attack.Player.Basic", "Blocks the player's basic attack.");
 
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(CoopArena_Ability_Dash, "CoopArena.Ability.Dash", "Triggers the dash ability.");
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(CoopArena_Cooldown_Dash, "CoopArena.Cooldown.Dash", "Blocks the dash ability.");

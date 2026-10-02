@@ -7,7 +7,7 @@
 
 UCoopArenaGameplayAbility_Attack::UCoopArenaGameplayAbility_Attack() {
 	FGameplayTagContainer Tags;
-	Tags.AddTagFast(CoopArena_Ability_Attack);
+	Tags.AddTagFast(CoopArena_Ability_Attack_Player_Basic);
 	SetAssetTags(Tags);
 }
 

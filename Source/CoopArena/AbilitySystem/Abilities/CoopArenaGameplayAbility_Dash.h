@@ -14,6 +14,11 @@ protected:
 		const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData
 	) override;
 
+	virtual void EndAbility(
+		const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+		const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled
+	) override;
+
 	UPROPERTY(EditDefaultsOnly, Category="Dash")
 	TObjectPtr<UAnimMontage> DashMontage;
 
@@ -25,4 +30,18 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category="Modifiers")
 	float Duration = 0.2f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Modifiers")
+	float PushStrength = 600.0f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Modifiers")
+	float PushUpStrength = 200.0f;
+private:
+	UFUNCTION()
+	void PushTouched(float DeltaSeconds, FVector OldLocation, FVector OldVelocity);
+
+	FVector DashDirection = FVector::ZeroVector;
+
+	// this is mandatory: PushTouched can be called multiple times for the same actor
+	TSet<TObjectKey<AActor>> PushedActorsSet;
 };

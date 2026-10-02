@@ -26,8 +26,8 @@ void ACoopArenaPlayerController::SetupInputComponent() {
 bool ACoopArenaPlayerController::InputKey(const FInputKeyEventArgs& Params) {
 	constexpr static float GamepadDeadZone = 0.25f;
 
-	const auto bGamepad = Params.IsGamepad();
-	const auto bUsed = Params.Event == IE_Axis
+	const bool bGamepad = Params.IsGamepad();
+	const bool bUsed = Params.Event == IE_Axis
 		? FMath::Abs(Params.AmountDepressed) > (bGamepad ? GamepadDeadZone : 0.0f)
 		: Params.Event != IE_Released;
 	if (bUsed && bUsingGamepad != bGamepad) {

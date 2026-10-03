@@ -14,14 +14,7 @@ UBTService_CoopArenaAttack::UBTService_CoopArenaAttack() {
 	Interval = 0.1f;
 	RandomDeviation = 0.05f;
 
-	TargetActorKey.AddObjectFilter(this, GET_MEMBER_NAME_CHECKED(UBTService_CoopArenaAttack, TargetActorKey), AActor::StaticClass());
-}
-
-void UBTService_CoopArenaAttack::InitializeFromAsset(UBehaviorTree& Asset) {
-	Super::InitializeFromAsset(Asset);
-
-	if (const auto BlackboardPtr = GetBlackboardAsset())
-		TargetActorKey.ResolveSelectedKey(*BlackboardPtr);
+	BlackboardKey.AddObjectFilter(this, GET_MEMBER_NAME_CHECKED(UBTService_CoopArenaAttack, BlackboardKey), AActor::StaticClass());
 }
 
 void UBTService_CoopArenaAttack::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, const float DeltaSeconds) {
@@ -33,7 +26,7 @@ void UBTService_CoopArenaAttack::TickNode(UBehaviorTreeComponent& OwnerComp, uin
 		return;
 
 	const auto EnemyPtr = Cast<ACharacter>(ControllerPtr->GetPawn().Get());
-	const auto PlayerPtr = Cast<AActor>(BlackboardPtr->GetValue<UBlackboardKeyType_Object>(TargetActorKey.GetSelectedKeyID()));
+	const auto PlayerPtr = Cast<AActor>(BlackboardPtr->GetValue<UBlackboardKeyType_Object>(BlackboardKey.GetSelectedKeyID()));
 	if (!EnemyPtr || !PlayerPtr || !EnemyPtr->GetCharacterMovement()->IsMovingOnGround())
 		return;
 
@@ -42,7 +35,7 @@ void UBTService_CoopArenaAttack::TickNode(UBehaviorTreeComponent& OwnerComp, uin
 		return;
 
 	TArray<FGameplayAbilitySpec*> Specs;
-	AbilitySystem->GetActivatableGameplayAbilitySpecsByAllMatchingTags(FGameplayTagContainer(AttackAbilityTag), Specs, false);
+	AbilitySystem->GetActivatableGameplayAbilitySpecsByAllMatchingTags(FGameplayTagContainer(CoopArena_Ability_Attack_Enemy_Basic), Specs, false);
 	// mid-swing TryActivateAbility would restart it
 	if (Specs.IsEmpty() || Specs[0]->IsActive())
 		return;

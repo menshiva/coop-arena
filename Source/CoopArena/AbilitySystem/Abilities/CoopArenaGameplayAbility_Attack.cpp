@@ -1,7 +1,5 @@
 ﻿#include "CoopArenaGameplayAbility_Attack.h"
 #include "EngineUtils.h"
-#include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
-#include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 #include "Weapons/CoopArenaProjectileManager.h"
@@ -12,34 +10,13 @@ UCoopArenaGameplayAbility_Attack::UCoopArenaGameplayAbility_Attack() {
 	SetAssetTags(Tags);
 }
 
-void UCoopArenaGameplayAbility_Attack::ActivateAbility(
-	const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-	const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData*
-) {
-	if (!CommitAbility(Handle, ActorInfo, ActivationInfo)) {
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-		return;
-	}
-
-	const auto EventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, CoopArena_Event_Attack);
-	EventTask->EventReceived.AddDynamic(this, &UCoopArenaGameplayAbility_Attack::OnAttackEvent);
-	EventTask->ReadyForActivation();
-
-	const auto MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, AttackMontage);
-	MontageTask->OnCompleted.AddDynamic(this, &UCoopArenaGameplayAbility_Attack::K2_EndAbility);
-	MontageTask->OnBlendOut.AddDynamic(this, &UCoopArenaGameplayAbility_Attack::K2_EndAbility);
-	MontageTask->OnInterrupted.AddDynamic(this, &UCoopArenaGameplayAbility_Attack::K2_EndAbility);
-	MontageTask->OnCancelled.AddDynamic(this, &UCoopArenaGameplayAbility_Attack::K2_EndAbility);
-	MontageTask->ReadyForActivation();
-}
-
 void UCoopArenaGameplayAbility_Attack::OnAttackEvent(FGameplayEventData) {
 	const auto CharacterPtr = Cast<ACharacter>(GetAvatarActorFromActorInfo());
 	if (!CharacterPtr || !CharacterPtr->GetController())
 		return;
 
 	if (!ProjectileManagerCache.IsValid()) {
-		if (TActorIterator<ACoopArenaProjectileManager> It(GetWorld(), ACoopArenaProjectileManager::StaticClass()); It)
+		if (TActorIterator<ACoopArenaProjectileManager> It(GetWorld()); It)
 			ProjectileManagerCache = *It;
 		if (!ProjectileManagerCache.IsValid())
 			return;

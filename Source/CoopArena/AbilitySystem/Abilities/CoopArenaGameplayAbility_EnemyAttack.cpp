@@ -1,8 +1,6 @@
 ﻿#include "CoopArenaGameplayAbility_EnemyAttack.h"
 #include "AbilitySystemComponent.h"
 #include "EngineUtils.h"
-#include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
-#include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "Algo/SelectRandomWeighted.h"
 #include "Animation/CoopArenaAnimNotify_SendGameplayEvent.h"
 #include "Core/CoopArenaCharacter.h"
@@ -13,28 +11,7 @@ UCoopArenaGameplayAbility_EnemyAttack::UCoopArenaGameplayAbility_EnemyAttack() {
 	SetAssetTags(Tags);
 }
 
-void UCoopArenaGameplayAbility_EnemyAttack::ActivateAbility(
-	const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-	const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData*
-) {
-	if (!CommitAbility(Handle, ActorInfo, ActivationInfo)) {
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-		return;
-	}
-
-	const auto EventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, CoopArena_Event_Attack);
-	EventTask->EventReceived.AddDynamic(this, &UCoopArenaGameplayAbility_EnemyAttack::OnAttackEvent);
-	EventTask->ReadyForActivation();
-
-	const auto MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, AttackMontage);
-	MontageTask->OnCompleted.AddDynamic(this, &UCoopArenaGameplayAbility_EnemyAttack::K2_EndAbility);
-	MontageTask->OnBlendOut.AddDynamic(this, &UCoopArenaGameplayAbility_EnemyAttack::K2_EndAbility);
-	MontageTask->OnInterrupted.AddDynamic(this, &UCoopArenaGameplayAbility_EnemyAttack::K2_EndAbility);
-	MontageTask->OnCancelled.AddDynamic(this, &UCoopArenaGameplayAbility_EnemyAttack::K2_EndAbility);
-	MontageTask->ReadyForActivation();
-}
-
-void UCoopArenaGameplayAbility_EnemyAttack::OnAttackEvent(FGameplayEventData) const {
+void UCoopArenaGameplayAbility_EnemyAttack::OnAttackEvent(FGameplayEventData) {
 	const auto EnemyPtr = GetAvatarActorFromActorInfo();
 	const auto DamageSpec = MakeOutgoingGameplayEffectSpec(DamageEffect);
 	if (!EnemyPtr || !DamageSpec.IsValid())

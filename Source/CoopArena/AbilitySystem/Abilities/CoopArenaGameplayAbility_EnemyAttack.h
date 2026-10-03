@@ -1,10 +1,10 @@
 ﻿#pragma once
 
-#include "CoopArenaGameplayAbility.h"
+#include "CoopArenaGameplayAbility_AttackBase.h"
 #include "CoopArenaGameplayAbility_EnemyAttack.generated.h"
 
 UCLASS(Abstract)
-class UCoopArenaGameplayAbility_EnemyAttack : public UCoopArenaGameplayAbility {
+class UCoopArenaGameplayAbility_EnemyAttack : public UCoopArenaGameplayAbility_AttackBase {
 	GENERATED_BODY()
 public:
 	UCoopArenaGameplayAbility_EnemyAttack();
@@ -13,16 +13,7 @@ public:
 
 	int32 RollDamage() const;
 protected:
-	virtual void ActivateAbility(
-		const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-		const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData
-	) override;
-
-	UPROPERTY(EditDefaultsOnly, Category="Attack")
-	TObjectPtr<UAnimMontage> AttackMontage;
-
-	UPROPERTY(EditDefaultsOnly, Category="Attack")
-	TSubclassOf<UGameplayEffect> DamageEffect;
+	virtual void OnAttackEvent(FGameplayEventData Payload) override;
 
 	UPROPERTY(EditDefaultsOnly, Category="Attack", meta=(ClampMin=0))
 	float HitDistance = 150.0f;
@@ -33,8 +24,5 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Attack")
 	TMap<int32, float> DamageChances = {{1, 55.0f}, {2, 35.0f}, {3, 10.0f}};
 private:
-	UFUNCTION()
-	void OnAttackEvent(FGameplayEventData Payload) const;
-
 	float GetHitTime() const;
 };

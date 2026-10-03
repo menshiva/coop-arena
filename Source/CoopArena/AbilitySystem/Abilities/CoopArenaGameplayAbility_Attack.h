@@ -1,25 +1,19 @@
 ﻿#pragma once
 
-#include "CoopArenaGameplayAbility.h"
+#include "CoopArenaGameplayAbility_AttackBase.h"
 #include "CoopArenaGameplayAbility_Attack.generated.h"
 
 class ACoopArenaProjectileManager;
 
 UCLASS(Abstract)
-class UCoopArenaGameplayAbility_Attack : public UCoopArenaGameplayAbility {
+class UCoopArenaGameplayAbility_Attack : public UCoopArenaGameplayAbility_AttackBase {
 	GENERATED_BODY()
 public:
 	UCoopArenaGameplayAbility_Attack();
 
 	int32 GetDamageAtDistance(float Distance) const;
 protected:
-	virtual void ActivateAbility(
-		const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-		const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData
-	) override;
-
-	UPROPERTY(EditDefaultsOnly, Category="Attack")
-	TObjectPtr<UAnimMontage> AttackMontage;
+	virtual void OnAttackEvent(FGameplayEventData Payload) override;
 
 	UPROPERTY(EditDefaultsOnly, Category="Attack")
 	FName SocketName;
@@ -28,16 +22,10 @@ protected:
 	float Speed = 2000.0f;
 
 	UPROPERTY(EditDefaultsOnly, Category="Attack")
-	TSubclassOf<UGameplayEffect> DamageEffect;
-
-	UPROPERTY(EditDefaultsOnly, Category="Attack")
 	FInt32Interval DamageRange = FInt32Interval(10, 20);
 
 	UPROPERTY(EditDefaultsOnly, Category="Attack")
 	FFloatInterval DamageDistance = FFloatInterval(500.0f, 2000.0f);
 private:
-	UFUNCTION()
-	void OnAttackEvent(FGameplayEventData Payload);
-
 	TWeakObjectPtr<ACoopArenaProjectileManager> ProjectileManagerCache;
 };

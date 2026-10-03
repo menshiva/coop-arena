@@ -11,6 +11,8 @@ public:
 	virtual void Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override;
 
 	virtual FString GetNotifyName_Implementation() const override;
+
+	FORCEINLINE FGameplayTag GetEventTag() const { return EventTag; }
 protected:
 	UPROPERTY(EditAnywhere, meta=(Categories="CoopArena.Event"))
 	FGameplayTag EventTag;

@@ -1,4 +1,5 @@
 ﻿#include "CoopArenaGameplayAbility_Attack.h"
+#include "EngineUtils.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "GameFramework/Character.h"
@@ -38,9 +39,8 @@ void UCoopArenaGameplayAbility_Attack::OnAttackEvent(FGameplayEventData) {
 		return;
 
 	if (!ProjectileManagerCache.IsValid()) {
-		ProjectileManagerCache = Cast<ACoopArenaProjectileManager>(
-			UGameplayStatics::GetActorOfClass(this, ACoopArenaProjectileManager::StaticClass())
-		);
+		if (TActorIterator<ACoopArenaProjectileManager> It(GetWorld(), ACoopArenaProjectileManager::StaticClass()); It)
+			ProjectileManagerCache = *It;
 		if (!ProjectileManagerCache.IsValid())
 			return;
 	}

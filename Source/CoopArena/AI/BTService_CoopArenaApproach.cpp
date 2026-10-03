@@ -11,10 +11,7 @@
 #include "NavigationSystem.h"
 
 #if ENABLE_DRAW_DEBUG
-static TAutoConsoleVariable CVarDebugApproach(
-	TEXT("CoopArena.DebugApproach"), false,
-	TEXT("Draws where each enemy runs")
-);
+static TAutoConsoleVariable CVarDebugApproach(TEXT("CoopArena.DebugApproach"), false, TEXT("Draws where each enemy runs"));
 #endif
 
 UBTService_CoopArenaApproach::UBTService_CoopArenaApproach() {

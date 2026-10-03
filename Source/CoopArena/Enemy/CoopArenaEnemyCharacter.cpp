@@ -1,5 +1,6 @@
 #include "CoopArenaEnemyCharacter.h"
 #include "EngineUtils.h"
+#include "AbilitySystem/Abilities/CoopArenaGameplayAbility_EnemyAttack.h"
 #include "AbilitySystem/CoopArenaAttributeSet.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
@@ -44,6 +45,8 @@ void ACoopArenaEnemyCharacter::BeginPlay() {
 	Super::BeginPlay();
 
 	AbilitySystem->InitAbilityActorInfo(this, this);
+	if (AttackAbility)
+		AbilitySystem->GiveAbility(FGameplayAbilitySpec(AttackAbility, 1));
 
 	AbilitySystem->GetGameplayAttributeValueChangeDelegate(UCoopArenaAttributeSet::GetMaxHealthAttribute()).AddUObject(this, &ACoopArenaEnemyCharacter::OnHealthChanged);
 	AbilitySystem->GetGameplayAttributeValueChangeDelegate(UCoopArenaAttributeSet::GetHealthAttribute()).AddUObject(this, &ACoopArenaEnemyCharacter::OnHealthChanged);

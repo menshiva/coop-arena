@@ -1,6 +1,6 @@
 #include "CoopArenaFpsWidget.h"
 
-// what `stat fps` shows
+// what 'stat fps' shows
 extern ENGINE_API float GAverageFPS;
 extern ENGINE_API float GAverageMS;
 

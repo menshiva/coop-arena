@@ -5,9 +5,13 @@
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Ability_Attack_Player_Basic);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Cooldown_Attack_Player_Basic);
 
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Ability_Attack_Enemy_Basic);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Cooldown_Attack_Enemy_Basic);
+
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Ability_Dash);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Cooldown_Dash);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Event_Attack);
 
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Status_Invulnerable);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(CoopArena_Status_Dead);

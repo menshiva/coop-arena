@@ -9,6 +9,8 @@ UCoopArenaGameplayAbility_Dash::UCoopArenaGameplayAbility_Dash() {
 	FGameplayTagContainer Tags;
 	Tags.AddTagFast(CoopArena_Ability_Dash);
 	SetAssetTags(Tags);
+
+	ActivationOwnedTags.AddTag(CoopArena_Status_Invulnerable);
 }
 
 void UCoopArenaGameplayAbility_Dash::ActivateAbility(

@@ -5,6 +5,7 @@
 #include "CoopArenaEnemyCharacter.generated.h"
 
 class UAbilitySystemComponent;
+class UCoopArenaGameplayAbility_EnemyAttack;
 class UWidgetComponent;
 struct FOnAttributeChangeData;
 class UCoopArenaAttributeSet;
@@ -65,6 +66,9 @@ public:
 	FORCEINLINE bool IsOvertaking() const { return bOvertaking; }
 	FORCEINLINE void SetOvertaking(const bool bValue) { bOvertaking = bValue; }
 protected:
+	UPROPERTY(EditDefaultsOnly, Category="Abilities")
+	TSubclassOf<UCoopArenaGameplayAbility_EnemyAttack> AttackAbility;
+
 	UPROPERTY(EditInstanceOnly, Category="Stats")
 	FCoopArenaEnemyStats Stats;
 

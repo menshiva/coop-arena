@@ -12,6 +12,7 @@ void UCoopArenaHudWidget::NativeTick(const FGeometry& MyGeometry, const float In
 		const bool bOnScreen = PawnPtr && SlotPtr && UWidgetLayoutLibrary::ProjectWorldLocationToWidgetPosition(
 			GetOwningPlayer(), PawnPtr->GetActorLocation(), Center, false
 		);
+
 		if (bOnScreen)
 			SlotPtr->SetPosition(Center);
 

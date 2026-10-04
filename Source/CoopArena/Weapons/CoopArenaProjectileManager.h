@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "GameplayEffectTypes.h"
 #include "GameFramework/Actor.h"

@@ -1,5 +1,4 @@
-﻿#include "CoopArenaPlayerState.h"
-#include "AbilitySystemComponent.h"
+#include "CoopArenaPlayerState.h"
 #include "AbilitySystem/CoopArenaAttributeSet.h"
 
 ACoopArenaPlayerState::ACoopArenaPlayerState() {

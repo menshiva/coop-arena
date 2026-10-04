@@ -1,23 +1,34 @@
-﻿#include "CoopArenaGameplayAbility_Attack.h"
+#include "CoopArenaGameplayAbility_Attack.h"
+#include "CoopArenaGameplayTags.h"
 #include "EngineUtils.h"
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 #include "Weapons/CoopArenaProjectileManager.h"
 
 UCoopArenaGameplayAbility_Attack::UCoopArenaGameplayAbility_Attack() {
-	FGameplayTagContainer Tags;
-	Tags.AddTagFast(CoopArena_Ability_Attack_Player_Basic);
-	SetAssetTags(Tags);
+	SetAssetTags(FGameplayTagContainer(CoopArena_Ability_Attack_Player_Basic));
+}
+
+int32 UCoopArenaGameplayAbility_Attack::GetDamage(const FGameplayEffectContextHandle& Context) const {
+	// by flight distance, from the launch point to the impact
+	const auto HitPtr = Context.GetHitResult();
+	if (!HitPtr)
+		return 0;
+
+	const double Distance = FVector::Dist(Context.GetOrigin(), HitPtr->ImpactPoint);
+	return FMath::RoundToInt(FMath::GetMappedRangeValueClamped(
+		FVector2f(DamageDistance.Min, DamageDistance.Max), FVector2f(DamageRange.Max, DamageRange.Min), Distance
+	));
 }
 
 void UCoopArenaGameplayAbility_Attack::OnAttackEvent(FGameplayEventData) {
 	const auto CharacterPtr = Cast<ACharacter>(GetAvatarActorFromActorInfo());
 	if (!CharacterPtr || !CharacterPtr->GetController())
 		return;
-	const auto World = GetWorld();
+	const auto WorldPtr = GetWorld();
 
 	if (!ProjectileManagerCache.IsValid()) {
-		if (TActorIterator<ACoopArenaProjectileManager> It(World); It)
+		if (TActorIterator<ACoopArenaProjectileManager> It(WorldPtr); It)
 			ProjectileManagerCache = *It;
 		if (!ProjectileManagerCache.IsValid())
 			return;
@@ -33,7 +44,7 @@ void UCoopArenaGameplayAbility_Attack::OnAttackEvent(FGameplayEventData) {
 
 	FHitResult Hit;
 	const FCollisionQueryParams Params(SCENE_QUERY_STAT(CoopArenaAttackAim), false, CharacterPtr);
-	const auto AimPoint = World->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, ECC_Visibility, Params)
+	const auto AimPoint = WorldPtr->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, ECC_Visibility, Params)
 		? Hit.ImpactPoint
 		: TraceEnd;
 
@@ -41,7 +52,7 @@ void UCoopArenaGameplayAbility_Attack::OnAttackEvent(FGameplayEventData) {
 	{
 		// find target: of the pawns along the aim ray, the nearest to the crosshair
 		TArray<FHitResult> PawnHits;
-		World->SweepMultiByObjectType(
+		WorldPtr->SweepMultiByObjectType(
 			PawnHits, TraceStart, AimPoint, FQuat::Identity, FCollisionObjectQueryParams(ECC_Pawn),
 			FCollisionShape::MakeSphere(TargetSweepRadius), Params
 		);
@@ -68,12 +79,12 @@ void UCoopArenaGameplayAbility_Attack::OnAttackEvent(FGameplayEventData) {
 
 			const double FlightTime = FVector::Dist(SocketPos, TargetPtr->GetActorLocation()) / Speed;
 
-			UGameplayStatics::SuggestProjectileVelocity_MovingTarget(World, Velocity, SocketPos, TargetPtr, FVector::ZeroVector, 0.0, FlightTime);
+			UGameplayStatics::SuggestProjectileVelocity_MovingTarget(WorldPtr, Velocity, SocketPos, TargetPtr, FVector::ZeroVector, 0.0, FlightTime);
 		}
 		else {
 			// an arc into the aim point
 
-			UGameplayStatics::FSuggestProjectileVelocityParameters TossParams(World, SocketPos, AimPoint, Speed);
+			UGameplayStatics::FSuggestProjectileVelocityParameters TossParams(WorldPtr, SocketPos, AimPoint, Speed);
 			TossParams.bFavorHighArc = false;
 			TossParams.TraceOption = ESuggestProjVelocityTraceOption::DoNotTrace;
 			TossParams.bAcceptClosestOnNoSolutions = true;
@@ -83,10 +94,4 @@ void UCoopArenaGameplayAbility_Attack::OnAttackEvent(FGameplayEventData) {
 	}
 
 	ProjectileManagerCache->Launch(SocketPos, Velocity, MakeOutgoingGameplayEffectSpec(DamageEffect), CharacterPtr);
-}
-
-int32 UCoopArenaGameplayAbility_Attack::GetDamageAtDistance(const float Distance) const {
-	return FMath::RoundToInt(FMath::GetMappedRangeValueClamped(
-		FVector2f(DamageDistance.Min, DamageDistance.Max), FVector2f(DamageRange.Max, DamageRange.Min), Distance
-	));
 }

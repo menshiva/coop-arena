@@ -22,9 +22,9 @@ public:
 		// which side of the player the arc goes: true - his right, false - his left
 		bool bRightOrbitSide = true;
 
+		// ticks in a row on the ground off the navmesh
 		uint8 OffNavmeshTicks = 0;
 	};
-
 	virtual void InitializeMemory(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, EBTMemoryInit::Type InitType) const override;
 	virtual uint16 GetInstanceMemorySize() const override { return sizeof(FMemory); }
 protected:

@@ -1,4 +1,5 @@
-﻿#include "CoopArenaGameplayAbility_AttackBase.h"
+#include "CoopArenaGameplayAbility_AttackBase.h"
+#include "CoopArenaGameplayTags.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 
@@ -11,14 +12,20 @@ void UCoopArenaGameplayAbility_AttackBase::ActivateAbility(
 		return;
 	}
 
-	const auto EventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, CoopArena_Event_Attack);
-	EventTask->EventReceived.AddDynamic(this, &UCoopArenaGameplayAbility_AttackBase::OnAttackEvent);
-	EventTask->ReadyForActivation();
+	{
+		// the attack itself goes on the montage notify
+		const auto EventTaskPtr = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, CoopArena_Event_Attack);
+		EventTaskPtr->EventReceived.AddDynamic(this, &UCoopArenaGameplayAbility_AttackBase::OnAttackEvent);
+		EventTaskPtr->ReadyForActivation();
+	}
 
-	const auto MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, AttackMontage);
-	MontageTask->OnCompleted.AddDynamic(this, &UCoopArenaGameplayAbility_AttackBase::K2_EndAbility);
-	MontageTask->OnBlendOut.AddDynamic(this, &UCoopArenaGameplayAbility_AttackBase::K2_EndAbility);
-	MontageTask->OnInterrupted.AddDynamic(this, &UCoopArenaGameplayAbility_AttackBase::K2_EndAbility);
-	MontageTask->OnCancelled.AddDynamic(this, &UCoopArenaGameplayAbility_AttackBase::K2_EndAbility);
-	MontageTask->ReadyForActivation();
+	{
+		// swing; any end of the montage ends the ability
+		const auto MontageTaskPtr = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, AttackMontage);
+		MontageTaskPtr->OnCompleted.AddDynamic(this, &UCoopArenaGameplayAbility_AttackBase::K2_EndAbility);
+		MontageTaskPtr->OnBlendOut.AddDynamic(this, &UCoopArenaGameplayAbility_AttackBase::K2_EndAbility);
+		MontageTaskPtr->OnInterrupted.AddDynamic(this, &UCoopArenaGameplayAbility_AttackBase::K2_EndAbility);
+		MontageTaskPtr->OnCancelled.AddDynamic(this, &UCoopArenaGameplayAbility_AttackBase::K2_EndAbility);
+		MontageTaskPtr->ReadyForActivation();
+	}
 }

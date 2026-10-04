@@ -20,6 +20,5 @@ protected:
 private:
 	void OnCooldownTagChanged(FGameplayTag Tag, int32 Count);
 
-	UPROPERTY()
 	TWeakObjectPtr<UAbilitySystemComponent> AbilitySystem;
 };

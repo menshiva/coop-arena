@@ -1,6 +1,6 @@
-﻿#include "CoopArenaProjectileManager.h"
-#include "AbilitySystemBlueprintLibrary.h"
+#include "CoopArenaProjectileManager.h"
 #include "AbilitySystemComponent.h"
+#include "AbilitySystemGlobals.h"
 #include "CoopArenaProjectileMovement.h"
 #include "Components/InstancedStaticMeshComponent.h"
 
@@ -16,14 +16,15 @@ ACoopArenaProjectileManager::ACoopArenaProjectileManager() {
 	BallsIsm->PrimaryComponentTick.bStartWithTickEnabled = false;
 	BallsIsm->PrimaryComponentTick.bAllowTickOnDedicatedServer = false;
 	BallsIsm->SetupAttachment(RootComponent);
+	BallsIsm->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
 }
 
 void ACoopArenaProjectileManager::BeginPlay() {
 	Super::BeginPlay();
 
-	if (const auto* BallCdo = BallComponentClass.GetDefaultObject()) {
-		BallsIsm->SetStaticMesh(BallCdo->GetStaticMesh());
-		BallsIsm->SetMaterial(0, BallCdo->GetMaterial(0));
+	if (const auto BallCdoPtr = BallComponentClass.GetDefaultObject()) {
+		BallsIsm->SetStaticMesh(BallCdoPtr->GetStaticMesh());
+		BallsIsm->SetMaterial(0, BallCdoPtr->GetMaterial(0));
 	}
 }
 
@@ -31,33 +32,36 @@ void ACoopArenaProjectileManager::Launch(
 	const FVector& Location, const FVector& Velocity, const FGameplayEffectSpecHandle& DamageSpec,
 	AActor* ActorToIgnore
 ) {
-	int32 SlotIdx;
+	int32 SlotIndex;
 	if (!BallSlotFreeIndices.IsEmpty()) {
+		// take a free slot from the pool
 		auto It = BallSlotFreeIndices.CreateIterator();
-		SlotIdx = *It;
+		SlotIndex = *It;
 		It.RemoveCurrent();
 	}
 	else {
+		// no free slot: grow the pool by a new pair
+
 		if (!BallComponentClass || !MovementComponentClass)
 			return;
 
-		const auto Mesh = NewObject<UStaticMeshComponent>(this, BallComponentClass);
-		Mesh->SetVisibility(false);
-		Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		Mesh->RegisterComponent();
-		Mesh->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepWorldTransform);
+		const auto MeshPtr = NewObject<UStaticMeshComponent>(this, BallComponentClass);
+		MeshPtr->SetVisibility(false);
+		MeshPtr->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		MeshPtr->RegisterComponent();
+		MeshPtr->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepWorldTransform);
 
-		const auto Pmc = NewObject<UCoopArenaProjectileMovement>(this, MovementComponentClass);
-		Pmc->SetAutoActivate(false);
-		Pmc->bAutoRegisterUpdatedComponent = false;
-		Pmc->Init(this, BallSlots.Num());
-		Pmc->RegisterComponent();
+		const auto MovementPtr = NewObject<UCoopArenaProjectileMovement>(this, MovementComponentClass);
+		MovementPtr->Init(this, BallSlots.Num());
+		MovementPtr->RegisterComponent();
 
-		SlotIdx = BallSlots.Emplace(Mesh, Pmc);
+		SlotIndex = BallSlots.Emplace(MeshPtr, MovementPtr);
 	}
 
 	{
-		auto& Slot = BallSlots[SlotIdx];
+		// launch (the thrower is ignored till the first hit)
+
+		auto& Slot = BallSlots[SlotIndex];
 
 		Slot.DamageSpec = DamageSpec;
 		if (Slot.DamageSpec.IsValid())
@@ -66,9 +70,7 @@ void ACoopArenaProjectileManager::Launch(
 		Slot.Mesh->SetWorldLocation(Location);
 		Slot.Mesh->SetVisibility(true);
 		Slot.Mesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-		Slot.Mesh->ClearMoveIgnoreActors();
-		if (ActorToIgnore)
-			Slot.Mesh->MoveIgnoreActors.Push(ActorToIgnore);
+		Slot.Mesh->IgnoreActorWhenMoving(ActorToIgnore, true);
 
 		Slot.Movement->SetUpdatedComponent(Slot.Mesh);
 		Slot.Movement->Velocity = Velocity;
@@ -85,9 +87,9 @@ void ACoopArenaProjectileManager::OnBallImpact(const int32 SlotIndex, const FHit
 	if (!Slot.DamageSpec.IsValid())
 		return;
 
-	if (const auto TargetAbilitySystem = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Hit.GetActor())) {
+	if (const auto TargetAbilitySystemPtr = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Hit.GetActor())) {
 		Slot.DamageSpec.Data->GetContext().AddHitResult(Hit);
-		TargetAbilitySystem->ApplyGameplayEffectSpecToSelf(*Slot.DamageSpec.Data.Get());
+		TargetAbilitySystemPtr->ApplyGameplayEffectSpecToSelf(*Slot.DamageSpec.Data.Get());
 	}
 
 	Slot.DamageSpec.Clear();
@@ -97,25 +99,29 @@ void ACoopArenaProjectileManager::OnBallStopped(const int32 SlotIndex, const boo
 	if (!BallSlots.IsValidIndex(SlotIndex))
 		return;
 
-	bool AlreadyInSet = false;
-	BallSlotFreeIndices.Add(SlotIndex, &AlreadyInSet);
-	if (AlreadyInSet)
+	bool bAlreadyInSet = false;
+	BallSlotFreeIndices.Add(SlotIndex, &bAlreadyInSet);
+	if (bAlreadyInSet)
 		return;
 
 	auto& Slot = BallSlots[SlotIndex];
 
 	if (bCreateIsmCopy) {
+		// leave a resting ism copy
 		const auto& Transform = Slot.Mesh->GetComponentTransform();
 		if (BallsIsm->GetInstanceCount() < BallsLimit) {
 			BallsIsm->AddInstance(Transform, true);
 		}
 		else {
+			// past the limit it overwrites the oldest
 			BallsIsm->UpdateInstanceTransform(NextIsmIndex, Transform, true, true);
 			NextIsmIndex = (NextIsmIndex + 1) % BallsLimit;
 		}
 	}
 
 	{
+		// back to the pool
+
 		Slot.Movement->Deactivate();
 
 		Slot.Mesh->SetVisibility(false);

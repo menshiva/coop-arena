@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "AbilitySystemInterface.h"
 #include "GameFramework/PlayerState.h"

@@ -20,7 +20,7 @@ struct FCoopArenaAbilityBinding {
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UInputAction> InputAction;
 
-	UPROPERTY(EditAnywhere, meta = (Categories = "CoopArena.Ability"))
+	UPROPERTY(EditAnywhere, meta = (Categories="CoopArena.Ability"))
 	FGameplayTag AbilityTag;
 
 	UPROPERTY(EditAnywhere)
@@ -52,16 +52,13 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	TObjectPtr<UCameraComponent> FollowCamera;
 
-	UPROPERTY(EditAnywhere, Category="Input")
+	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputAction> MoveAction;
 
-	UPROPERTY(EditAnywhere, Category="Input")
+	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputAction> LookAction;
 
-	UPROPERTY(EditAnywhere, Category="Input")
-	TObjectPtr<UInputAction> MouseLookAction;
-
-	UPROPERTY(EditAnywhere, Category="Input")
+	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputAction> JumpAction;
 
 	UPROPERTY(EditDefaultsOnly, Category="Input")
@@ -76,6 +73,5 @@ private:
 	void OnAbilityInput(FGameplayTag AbilityTag);
 	void OnDeath(AActor* Killer);
 
-	UPROPERTY()
 	TWeakObjectPtr<UAbilitySystemComponent> AbilitySystem;
 };

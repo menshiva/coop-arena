@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "CoopArenaGameplayAbility.h"
 #include "CoopArenaGameplayAbility_Dash.generated.h"
@@ -22,19 +22,19 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Dash")
 	TObjectPtr<UAnimMontage> DashMontage;
 
-	UPROPERTY(EditDefaultsOnly, Category="Modifiers")
+	UPROPERTY(EditDefaultsOnly, Category="Dash")
 	float Strength = 2000.0f;
 
-	UPROPERTY(EditDefaultsOnly, Category="Modifiers")
+	UPROPERTY(EditDefaultsOnly, Category="Dash")
 	float FlyingStrength = 2000.0f;
 
-	UPROPERTY(EditDefaultsOnly, Category="Modifiers")
+	UPROPERTY(EditDefaultsOnly, Category="Dash")
 	float Duration = 0.2f;
 
-	UPROPERTY(EditDefaultsOnly, Category="Modifiers")
+	UPROPERTY(EditDefaultsOnly, Category="Dash")
 	float PushStrength = 600.0f;
 
-	UPROPERTY(EditDefaultsOnly, Category="Modifiers")
+	UPROPERTY(EditDefaultsOnly, Category="Dash")
 	float PushUpStrength = 200.0f;
 private:
 	UFUNCTION()

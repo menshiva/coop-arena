@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "CoopArenaProjectileMovement.generated.h"

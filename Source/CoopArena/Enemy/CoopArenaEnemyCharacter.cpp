@@ -1,11 +1,11 @@
 #include "CoopArenaEnemyCharacter.h"
+#include "CoopArenaEnemySpawner.h"
 #include "EngineUtils.h"
 #include "AbilitySystem/Abilities/CoopArenaGameplayAbility_EnemyAttack.h"
 #include "AbilitySystem/CoopArenaAttributeSet.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Core/CoopArenaGameState.h"
-#include "Enemy/CoopArenaEnemySpawner.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerState.h"
 #include "Kismet/GameplayStatics.h"
@@ -18,13 +18,16 @@ ACoopArenaEnemyCharacter::ACoopArenaEnemyCharacter() {
 	HealthWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthWidget"));
 	HealthWidget->SetupAttachment(GetCapsuleComponent());
 	HealthWidget->CastShadow = false;
+	HealthWidget->SetTickMode(ETickMode::Disabled);
+	HealthWidget->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
 }
 
 void ACoopArenaEnemyCharacter::PostActorCreated() {
 	Super::PostActorCreated();
+
 #if WITH_EDITOR
 	// placed by hand
-	if (const auto World = GetWorld(); World && !World->IsGameWorld())
+	if (const auto WorldPtr = GetWorld(); WorldPtr && !WorldPtr->IsGameWorld())
 		RollStatsFromSpawner();
 #endif
 }
@@ -32,12 +35,8 @@ void ACoopArenaEnemyCharacter::PostActorCreated() {
 #if WITH_EDITOR
 void ACoopArenaEnemyCharacter::PostEditImport() {
 	Super::PostEditImport();
-	RollStatsFromSpawner();
-}
 
-void ACoopArenaEnemyCharacter::RollStatsFromSpawner() {
-	if (const TActorIterator<ACoopArenaEnemySpawner> It(GetWorld()); It)
-		Stats = It->GetEnemyNewRolledStats();
+	RollStatsFromSpawner();
 }
 #endif
 
@@ -54,8 +53,6 @@ void ACoopArenaEnemyCharacter::BeginPlay() {
 	Attributes->SetMaxHealth(Stats.MaxHealth);
 	Attributes->SetHealth(Stats.MaxHealth);
 	Attributes->OnDeath.AddUObject(this, &ACoopArenaEnemyCharacter::OnDeath);
-
-	HealthWidget->RequestRenderUpdate();
 }
 
 void ACoopArenaEnemyCharacter::Tick(const float DeltaSeconds) {
@@ -86,8 +83,8 @@ void ACoopArenaEnemyCharacter::SetArrivedToStandingPlayer(const bool bValue) {
 }
 
 void ACoopArenaEnemyCharacter::OnHealthChanged(const FOnAttributeChangeData&) const {
-	if (const auto Widget = Cast<UCoopArenaHealthWidget>(HealthWidget->GetWidget())) {
-		Widget->SetHealth(FMath::RoundToInt(Attributes->GetHealth()), FMath::RoundToInt(Attributes->GetMaxHealth()));
+	if (const auto WidgetPtr = Cast<UCoopArenaHealthWidget>(HealthWidget->GetWidget())) {
+		WidgetPtr->SetHealth(FMath::RoundToInt(Attributes->GetHealth()), FMath::RoundToInt(Attributes->GetMaxHealth()));
 		HealthWidget->RequestRenderUpdate();
 	}
 }
@@ -96,18 +93,25 @@ void ACoopArenaEnemyCharacter::OnDeath(AActor* Killer) {
 	// handle 2 balls at the same frame when dead
 	Attributes->OnDeath.RemoveAll(this);
 
-	if (const auto KillerPlayerState = Cast<APlayerState>(Killer)) {
-		KillerPlayerState->SetScore(KillerPlayerState->GetScore() + 1.0f);
+	if (const auto KillerPlayerStatePtr = Cast<APlayerState>(Killer)) {
+		KillerPlayerStatePtr->SetScore(KillerPlayerStatePtr->GetScore() + 1.0f);
 		UKismetSystemLibrary::PrintString(
-			this, FString::Printf(TEXT("%s: %.0f kills"), *KillerPlayerState->GetPlayerName(), KillerPlayerState->GetScore()),
+			this, FString::Printf(TEXT("%s: %.0f kills"), *KillerPlayerStatePtr->GetPlayerName(), KillerPlayerStatePtr->GetScore()),
 			true, true, FLinearColor::Green, 5.0f
 		);
 	}
 
 	// only a death inside the standing crowd leaves a gap to re-pack into
 	if (bArrivedToStandingPlayer)
-		if (const auto GameState = GetWorld()->GetGameState<ACoopArenaGameState>())
-			GameState->NotifyEnemyDeath();
+		if (const auto GameStatePtr = GetWorld()->GetGameState<ACoopArenaGameState>())
+			GameStatePtr->NotifyEnemyDeath();
 
 	Destroy();
 }
+
+#if WITH_EDITOR
+void ACoopArenaEnemyCharacter::RollStatsFromSpawner() {
+	if (const TActorIterator<ACoopArenaEnemySpawner> It(GetWorld()); It)
+		Stats = It->GetEnemyNewRolledStats();
+}
+#endif

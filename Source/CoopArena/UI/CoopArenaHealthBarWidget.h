@@ -8,11 +8,11 @@ class UProgressBar;
 UCLASS(Abstract, meta=(DisableNativeTick))
 class UCoopArenaHealthBarWidget : public UUserWidget {
 	GENERATED_BODY()
+protected:
+	virtual void NativePreConstruct() override;
 public:
 	void SetProgress(float Progress) const;
 protected:
-	virtual void NativePreConstruct() override;
-
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UProgressBar> Bar;
 

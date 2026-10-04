@@ -1,14 +1,13 @@
-﻿#include "CoopArenaGameplayAbility_Dash.h"
+#include "CoopArenaGameplayAbility_Dash.h"
 #include "AbilitySystemComponent.h"
+#include "CoopArenaGameplayTags.h"
 #include "Abilities/Tasks/AbilityTask_ApplyRootMotionConstantForce.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 UCoopArenaGameplayAbility_Dash::UCoopArenaGameplayAbility_Dash() {
-	FGameplayTagContainer Tags;
-	Tags.AddTagFast(CoopArena_Ability_Dash);
-	SetAssetTags(Tags);
+	SetAssetTags(FGameplayTagContainer(CoopArena_Ability_Dash));
 
 	ActivationOwnedTags.AddTag(CoopArena_Status_Invulnerable);
 }
@@ -17,41 +16,38 @@ void UCoopArenaGameplayAbility_Dash::ActivateAbility(
 	const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData*
 ) {
-	if (const auto CharacterPtr = Cast<ACharacter>(ActorInfo->AvatarActor.Get())) {
-		if (CommitAbility(Handle, ActorInfo, ActivationInfo)) {
-			auto Direction = CharacterPtr->GetLastMovementInputVector();
-			if (Direction.IsNearlyZero())
-				Direction = CharacterPtr->GetActorForwardVector();
-			DashDirection = Direction.GetSafeNormal2D();
-
-			if (ActorInfo->AbilitySystemComponent.IsValid())
-				ActorInfo->AbilitySystemComponent->PlayMontage(this, ActivationInfo, DashMontage, 1.0f);
-
-			{
-				// pass through enemies
-				PushedActorsSet.Reset();
-				CharacterPtr->OnCharacterMovementUpdated.AddDynamic(this, &UCoopArenaGameplayAbility_Dash::PushTouched);
-				CharacterPtr->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
-			}
-
-			{
-				// run task
-				const auto MovementPtr = CharacterPtr->GetCharacterMovement();
-				const auto Task = UAbilityTask_ApplyRootMotionConstantForce::ApplyRootMotionConstantForce(
-					this, FName("Dash"), DashDirection,
-					MovementPtr->IsFalling() ? FlyingStrength : Strength, Duration, false,
-					nullptr, ERootMotionFinishVelocityMode::MaintainLastRootMotionVelocity,
-					FVector::ZeroVector, MovementPtr->MaxWalkSpeed, false
-				);
-				Task->OnFinish.AddDynamic(this, &UCoopArenaGameplayAbility_Dash::K2_EndAbility);
-				Task->ReadyForActivation();
-			}
-
-			return;
-		}
+	const auto CharacterPtr = Cast<ACharacter>(ActorInfo->AvatarActor.Get());
+	if (!CharacterPtr || !CommitAbility(Handle, ActorInfo, ActivationInfo)) {
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
 	}
 
-	EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+	auto Direction = CharacterPtr->GetLastMovementInputVector();
+	if (Direction.IsNearlyZero())
+		Direction = CharacterPtr->GetActorForwardVector();
+	DashDirection = Direction.GetSafeNormal2D();
+
+	ActorInfo->AbilitySystemComponent->PlayMontage(this, ActivationInfo, DashMontage, 1.0f);
+
+	{
+		// pass through enemies
+		PushedActorsSet.Reset();
+		CharacterPtr->OnCharacterMovementUpdated.AddDynamic(this, &UCoopArenaGameplayAbility_Dash::PushTouched);
+		CharacterPtr->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	}
+
+	{
+		// run task
+		const auto MovementPtr = CharacterPtr->GetCharacterMovement();
+		const auto TaskPtr = UAbilityTask_ApplyRootMotionConstantForce::ApplyRootMotionConstantForce(
+			this, FName("Dash"), DashDirection,
+			MovementPtr->IsFalling() ? FlyingStrength : Strength, Duration, false,
+			nullptr, ERootMotionFinishVelocityMode::MaintainLastRootMotionVelocity,
+			FVector::ZeroVector, 0.0f, false
+		);
+		TaskPtr->OnFinish.AddDynamic(this, &UCoopArenaGameplayAbility_Dash::K2_EndAbility);
+		TaskPtr->ReadyForActivation();
+	}
 }
 
 void UCoopArenaGameplayAbility_Dash::EndAbility(
@@ -73,20 +69,23 @@ void UCoopArenaGameplayAbility_Dash::PushTouched(float, const FVector OldLocatio
 	if (!CharacterPtr)
 		return;
 
-	const auto CapsulePtr = CharacterPtr->GetCapsuleComponent();
 	TArray<FHitResult> Hits;
-	CharacterPtr->GetWorld()->SweepMultiByObjectType(
-		Hits, OldLocation, CharacterPtr->GetActorLocation(), CapsulePtr->GetComponentQuat(), FCollisionObjectQueryParams(ECC_Pawn),
-		CapsulePtr->GetCollisionShape(), FCollisionQueryParams(NAME_None, false, CharacterPtr)
-	);
+	{
+		const auto CapsulePtr = CharacterPtr->GetCapsuleComponent();
+		CharacterPtr->GetWorld()->SweepMultiByObjectType(
+			Hits, OldLocation, CharacterPtr->GetActorLocation(), CapsulePtr->GetComponentQuat(), FCollisionObjectQueryParams(ECC_Pawn),
+			CapsulePtr->GetCollisionShape(), FCollisionQueryParams(NAME_None, false, CharacterPtr)
+		);
+	}
+
 	for (const auto& Hit : Hits) {
 		const auto OtherPtr = Cast<ACharacter>(Hit.GetActor());
 		if (!OtherPtr)
 			continue;
 
-		bool AlreadyInSet = false;
-		PushedActorsSet.Add(OtherPtr, &AlreadyInSet);
-		if (AlreadyInSet)
+		bool bAlreadyInSet = false;
+		PushedActorsSet.Add(OtherPtr, &bAlreadyInSet);
+		if (bAlreadyInSet)
 			continue;
 
 		{

@@ -1,4 +1,4 @@
-﻿#include "CoopArenaProjectileMovement.h"
+#include "CoopArenaProjectileMovement.h"
 #include "CoopArenaProjectileManager.h"
 #include "Engine/World.h"
 #include "GameFramework/WorldSettings.h"
@@ -7,6 +7,12 @@ UCoopArenaProjectileMovement::UCoopArenaProjectileMovement() {
 	PrimaryComponentTick.bCanEverTick = true;
 	PrimaryComponentTick.bStartWithTickEnabled = false;
 	PrimaryComponentTick.bAllowTickOnDedicatedServer = false;
+
+	// the manager's pool activates it and gives it a ball on launch
+	bAutoActivate = false;
+	bAutoRegisterUpdatedComponent = false;
+	bAutoUpdateTickRegistration = false;
+	bAutoRegisterPhysicsVolumeUpdates = false;
 }
 
 void UCoopArenaProjectileMovement::Init(ACoopArenaProjectileManager* InManager, const int32 InSlotIndex) {
@@ -24,8 +30,8 @@ void UCoopArenaProjectileMovement::HandleImpact(const FHitResult& Hit, const flo
 bool UCoopArenaProjectileMovement::CheckStillInWorld() {
 	// the engine checks KillZ against the owner (manager), not the ball
 	if (UpdatedComponent) {
-		const auto WorldSettings = GetWorld()->GetWorldSettings();
-		if (WorldSettings && WorldSettings->AreWorldBoundsChecksEnabled() && UpdatedComponent->GetComponentLocation().Z < WorldSettings->KillZ) {
+		const auto WorldSettingsPtr = GetWorld()->GetWorldSettings();
+		if (WorldSettingsPtr && WorldSettingsPtr->AreWorldBoundsChecksEnabled() && UpdatedComponent->GetComponentLocation().Z < WorldSettingsPtr->KillZ) {
 			Super::StopSimulating(FHitResult());
 			if (Manager.IsValid())
 				Manager->OnBallStopped(SlotIndex, false);

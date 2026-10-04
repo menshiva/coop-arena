@@ -1,15 +1,14 @@
 #include "CoopArenaCharacter.h"
-#include "CoopArena.h"
 #include "CoopArenaPlayerState.h"
-#include "Camera/CameraComponent.h"
-#include "Components/CapsuleComponent.h"
-#include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "AbilitySystem/Abilities/CoopArenaGameplayAbility.h"
 #include "AbilitySystem/CoopArenaAttributeSet.h"
+#include "Camera/CameraComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "GameFramework/SpringArmComponent.h"
 
 ACoopArenaCharacter::ACoopArenaCharacter() {
-	GetCapsuleComponent()->InitCapsuleSize(32.f, 90.0f);
+	GetCapsuleComponent()->InitCapsuleSize(32.0f, 90.0f);
 
 	// Don't rotate when the controller rotates. Let that just affect the camera.
 	// bUseControllerRotationPitch = false;
@@ -29,7 +28,6 @@ ACoopArenaCharacter::ACoopArenaCharacter() {
 	// Create a follow camera
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
-	// FollowCamera->bUsePawnControlRotation = false;
 }
 
 void ACoopArenaCharacter::PossessedBy(AController* NewController) {
@@ -39,11 +37,9 @@ void ACoopArenaCharacter::PossessedBy(AController* NewController) {
 		AbilitySystem = StatePtr->GetAbilitySystemComponent();
 		AbilitySystem->InitAbilityActorInfo(StatePtr, this);
 
-		auto Context = AbilitySystem->MakeEffectContext();
-		Context.AddSourceObject(this);
 		for (const auto& Effect : {InitStatsEffect, SpawnProtectionEffect})
 			if (Effect)
-				AbilitySystem->ApplyGameplayEffectToSelf(Effect->GetDefaultObject<UGameplayEffect>(), 1.0f, Context);
+				AbilitySystem->ApplyGameplayEffectToSelf(Effect.GetDefaultObject(), 1.0f, AbilitySystem->MakeEffectContext());
 
 		for (const auto& Binding : AbilityBindings)
 			if (Binding.bGrantedAtStart && Binding.AbilityClass && !AbilitySystem->FindAbilitySpecFromClass(Binding.AbilityClass))
@@ -63,23 +59,19 @@ void ACoopArenaCharacter::UnPossessed() {
 }
 
 void ACoopArenaCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) {
-	if (const auto EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
+	if (const auto EnhancedInputComponentPtr = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
 		// Moving
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ACoopArenaCharacter::Move);
-		EnhancedInputComponent->BindAction(MouseLookAction, ETriggerEvent::Triggered, this, &ACoopArenaCharacter::Look);
-		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ACoopArenaCharacter::Look);
+		EnhancedInputComponentPtr->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ACoopArenaCharacter::Move);
+		EnhancedInputComponentPtr->BindAction(LookAction, ETriggerEvent::Triggered, this, &ACoopArenaCharacter::Look);
 
 		// Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		EnhancedInputComponentPtr->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
+		EnhancedInputComponentPtr->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
 		// Abilities
 		for (const auto& Binding : AbilityBindings)
 			if (Binding.InputAction)
-				EnhancedInputComponent->BindAction(Binding.InputAction, ETriggerEvent::Started, this, &ACoopArenaCharacter::OnAbilityInput, Binding.AbilityTag);
-	}
-	else {
-		UE_LOG(LogCoopArena, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
+				EnhancedInputComponentPtr->BindAction(Binding.InputAction, ETriggerEvent::Started, this, &ACoopArenaCharacter::OnAbilityInput, Binding.AbilityTag);
 	}
 }
 
@@ -89,7 +81,7 @@ void ACoopArenaCharacter::Move(const FInputActionValue& Value) {
 
 		// find out which way is forward
 		const auto Rotation = ControllerPtr->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
+		const FRotator YawRotation(0.0, Rotation.Yaw, 0.0);
 
 		const auto ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 		const auto RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);

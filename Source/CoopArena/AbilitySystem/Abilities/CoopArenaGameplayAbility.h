@@ -1,6 +1,5 @@
-﻿#pragma once
+#pragma once
 
-#include "CoopArenaGameplayTags.h"
 #include "Abilities/GameplayAbility.h"
 #include "CoopArenaGameplayAbility.generated.h"
 
@@ -11,6 +10,5 @@ public:
 	UCoopArenaGameplayAbility() {
 		InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 		bRetriggerInstancedAbility = true;
-		ActivationBlockedTags.AddTag(CoopArena_Status_Dead);
 	}
 };

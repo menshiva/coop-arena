@@ -1,6 +1,5 @@
-﻿#include "CoopArenaAnimNotify_SendGameplayEvent.h"
+#include "CoopArenaAnimNotify_SendGameplayEvent.h"
 #include "AbilitySystemBlueprintLibrary.h"
-#include "Abilities/GameplayAbilityTypes.h"
 #include "Components/SkeletalMeshComponent.h"
 
 void UCoopArenaAnimNotify_SendGameplayEvent::Notify(
@@ -8,18 +7,8 @@ void UCoopArenaAnimNotify_SendGameplayEvent::Notify(
 ) {
 	Super::Notify(MeshComp, Animation, EventReference);
 
-	if (!MeshComp || !EventTag.IsValid())
-		return;
-
-	const auto OwnerPtr = MeshComp->GetOwner();
-	if (!OwnerPtr)
-		return;
-
-	FGameplayEventData EventData;
-	EventData.EventTag = EventTag;
-	EventData.Instigator = OwnerPtr;
-
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(OwnerPtr, EventTag, EventData);
+	if (MeshComp && EventTag.IsValid())
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(MeshComp->GetOwner(), EventTag, FGameplayEventData());
 }
 
 FString UCoopArenaAnimNotify_SendGameplayEvent::GetNotifyName_Implementation() const {

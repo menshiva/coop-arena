@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "CoopArenaGameplayAbility_AttackBase.h"
 #include "CoopArenaGameplayAbility_EnemyAttack.generated.h"
@@ -9,9 +9,9 @@ class UCoopArenaGameplayAbility_EnemyAttack : public UCoopArenaGameplayAbility_A
 public:
 	UCoopArenaGameplayAbility_EnemyAttack();
 
-	bool WouldHit(const AActor& Target) const;
+	virtual int32 GetDamage(const FGameplayEffectContextHandle& Context) const override;
 
-	int32 RollDamage() const;
+	bool WouldHit(const AActor& Target) const;
 protected:
 	virtual void OnAttackEvent(FGameplayEventData Payload) override;
 
@@ -23,6 +23,4 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category="Attack")
 	TMap<int32, float> DamageChances = {{1, 55.0f}, {2, 35.0f}, {3, 10.0f}};
-private:
-	float GetHitTime() const;
 };

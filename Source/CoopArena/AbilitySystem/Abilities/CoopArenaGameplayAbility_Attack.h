@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "CoopArenaGameplayAbility_AttackBase.h"
 #include "CoopArenaGameplayAbility_Attack.generated.h"
@@ -11,7 +11,7 @@ class UCoopArenaGameplayAbility_Attack : public UCoopArenaGameplayAbility_Attack
 public:
 	UCoopArenaGameplayAbility_Attack();
 
-	int32 GetDamageAtDistance(float Distance) const;
+	virtual int32 GetDamage(const FGameplayEffectContextHandle& Context) const override;
 protected:
 	virtual void OnAttackEvent(FGameplayEventData Payload) override;
 

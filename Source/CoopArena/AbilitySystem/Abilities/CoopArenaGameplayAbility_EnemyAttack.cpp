@@ -1,14 +1,42 @@
-﻿#include "CoopArenaGameplayAbility_EnemyAttack.h"
+#include "CoopArenaGameplayAbility_EnemyAttack.h"
 #include "AbilitySystemComponent.h"
+#include "CoopArenaGameplayTags.h"
 #include "EngineUtils.h"
 #include "Algo/SelectRandomWeighted.h"
 #include "Animation/CoopArenaAnimNotify_SendGameplayEvent.h"
 #include "Core/CoopArenaCharacter.h"
 
 UCoopArenaGameplayAbility_EnemyAttack::UCoopArenaGameplayAbility_EnemyAttack() {
-	FGameplayTagContainer Tags;
-	Tags.AddTagFast(CoopArena_Ability_Attack_Enemy_Basic);
-	SetAssetTags(Tags);
+	SetAssetTags(FGameplayTagContainer(CoopArena_Ability_Attack_Enemy_Basic));
+}
+
+int32 UCoopArenaGameplayAbility_EnemyAttack::GetDamage(const FGameplayEffectContextHandle&) const {
+	const auto ChosenPtr = Algo::SelectRandomWeightedBy(DamageChances, [] (const TPair<int32, float>& P) { return P.Value; });
+	return ChosenPtr ? ChosenPtr->Key : 1;
+}
+
+bool UCoopArenaGameplayAbility_EnemyAttack::WouldHit(const AActor& Target) const {
+	const auto EnemyPtr = GetAvatarActorFromActorInfo();
+	if (!EnemyPtr)
+		return false;
+
+	double HitTime = 0.0;
+	if (AttackMontage) {
+		// time of the hit notify in the montage
+		for (const auto& Event : AttackMontage->Notifies) {
+			if (const auto NotifyPtr = Cast<UCoopArenaAnimNotify_SendGameplayEvent>(Event.Notify)) {
+				if (NotifyPtr->GetEventTag() == CoopArena_Event_Attack) {
+					HitTime = Event.GetTriggerTime();
+					break;
+				}
+			}
+		}
+	}
+
+	// where the target will be at the notify if both keep their velocities
+	const auto ToTargetAtHit = Target.GetActorLocation() - EnemyPtr->GetActorLocation() + (Target.GetVelocity() - EnemyPtr->GetVelocity()) * HitTime;
+
+	return ToTargetAtHit.SizeSquared() <= FMath::Square(HitDistance);
 }
 
 void UCoopArenaGameplayAbility_EnemyAttack::OnAttackEvent(FGameplayEventData) {
@@ -28,31 +56,7 @@ void UCoopArenaGameplayAbility_EnemyAttack::OnAttackEvent(FGameplayEventData) {
 		if (FVector2D::DotProduct(Forward, FVector2D(ToPlayer).GetSafeNormal()) < MinCos)
 			continue;
 
-		if (const auto AbilitySystem = It->GetAbilitySystemComponent())
-			AbilitySystem->ApplyGameplayEffectSpecToSelf(*DamageSpec.Data.Get());
+		if (const auto AbilitySystemPtr = It->GetAbilitySystemComponent())
+			AbilitySystemPtr->ApplyGameplayEffectSpecToSelf(*DamageSpec.Data.Get());
 	}
-}
-
-bool UCoopArenaGameplayAbility_EnemyAttack::WouldHit(const AActor& Target) const {
-	const auto EnemyPtr = GetAvatarActorFromActorInfo();
-	if (!EnemyPtr)
-		return false;
-
-	// where the target will be at the notify if both keep their velocities
-	const auto ToTargetAtHit = Target.GetActorLocation() - EnemyPtr->GetActorLocation() + (Target.GetVelocity() - EnemyPtr->GetVelocity()) * GetHitTime();
-	return ToTargetAtHit.SizeSquared() <= FMath::Square(HitDistance);
-}
-
-int32 UCoopArenaGameplayAbility_EnemyAttack::RollDamage() const {
-	const auto Chosen = Algo::SelectRandomWeightedBy(DamageChances, [] (const TPair<int32, float>& P) { return P.Value; });
-	return Chosen ? Chosen->Key : 1;
-}
-
-float UCoopArenaGameplayAbility_EnemyAttack::GetHitTime() const {
-	if (AttackMontage)
-		for (const auto& Event : AttackMontage->Notifies)
-			if (const auto Notify = Cast<UCoopArenaAnimNotify_SendGameplayEvent>(Event.Notify))
-				if (Notify->GetEventTag() == CoopArena_Event_Attack)
-					return Event.GetTriggerTime();
-	return 0.0f;
 }

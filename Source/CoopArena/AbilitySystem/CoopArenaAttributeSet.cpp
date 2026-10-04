@@ -1,4 +1,4 @@
-﻿#include "CoopArenaAttributeSet.h"
+#include "CoopArenaAttributeSet.h"
 #include "GameplayEffectExtension.h"
 #include "Kismet/KismetSystemLibrary.h"
 
@@ -12,7 +12,10 @@ void UCoopArenaAttributeSet::PostAttributeBaseChange(const FGameplayAttribute& A
 
 	if (Attribute == GetHealthAttribute() && NewValue < OldValue) {
 		UKismetSystemLibrary::PrintString(
-			this, FString::Printf(TEXT("took %d damage, %d health left"), FMath::RoundToInt(OldValue - NewValue), FMath::RoundToInt(NewValue)),
+			this, FString::Printf(
+				TEXT("%s took %d damage, %d/%d health left"), *GetNameSafe(GetOwningAbilitySystemComponent()->GetAvatarActor()),
+				FMath::RoundToInt(OldValue - NewValue), FMath::RoundToInt(NewValue), FMath::RoundToInt(GetMaxHealth())
+			),
 			true, true, FLinearColor::Red, 5.0f
 		);
 	}
@@ -34,7 +37,7 @@ void UCoopArenaAttributeSet::PostAttributeChange(const FGameplayAttribute& Attri
 void UCoopArenaAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) {
 	Super::PostGameplayEffectExecute(Data);
 
-	if (Data.EvaluatedData.Attribute == GetHealthAttribute() && GetHealth() <= 0.01f)
+	if (Data.EvaluatedData.Attribute == GetHealthAttribute() && GetHealth() <= 0.0f)
 		OnDeath.Broadcast(Data.EffectSpec.GetContext().GetOriginalInstigator());
 }
 

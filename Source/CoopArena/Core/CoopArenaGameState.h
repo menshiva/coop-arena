@@ -7,13 +7,9 @@ UCLASS()
 class ACoopArenaGameState : public AGameStateBase {
 	GENERATED_BODY()
 public:
-	FORCEINLINE static ACoopArenaGameState* Get(const UWorld* World) {
-		return World->GetGameState<ACoopArenaGameState>();
-	}
-
 	static uint32 GetEnemyDeathCount(const UWorld* World) {
-		if (const auto GameState = Get(World))
-			return GameState->GetEnemyDeathCount();
+		if (const auto GameStatePtr = World->GetGameState<ACoopArenaGameState>())
+			return GameStatePtr->GetEnemyDeathCount();
 		return 0;
 	}
 

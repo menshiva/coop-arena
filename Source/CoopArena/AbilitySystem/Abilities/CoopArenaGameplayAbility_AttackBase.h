@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "CoopArenaGameplayAbility.h"
 #include "CoopArenaGameplayAbility_AttackBase.generated.h"
@@ -6,6 +6,8 @@
 UCLASS(Abstract)
 class UCoopArenaGameplayAbility_AttackBase : public UCoopArenaGameplayAbility {
 	GENERATED_BODY()
+public:
+	virtual int32 GetDamage(const FGameplayEffectContextHandle& Context) const { return 0; }
 protected:
 	virtual void ActivateAbility(
 		const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,

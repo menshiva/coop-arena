@@ -27,8 +27,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="UI")
 	TSubclassOf<UCoopArenaHudWidget> HudWidgetClass;
 
-	UPROPERTY(EditAnywhere, Category ="Input|Input Mappings")
-	TArray<UInputMappingContext*> DefaultMappingContexts;
+	UPROPERTY(EditDefaultsOnly, Category="Input|Input Mappings")
+	TArray<TObjectPtr<UInputMappingContext>> DefaultMappingContexts;
 private:
 	void OnHealthChanged(const FOnAttributeChangeData& Data) const;
 

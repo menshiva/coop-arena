@@ -31,6 +31,6 @@ void ACoopArenaAIController::OnPlayerPawnChanged(APawn*, APawn* NewPawn) const {
 
 	// reset target
 	Blackboard->SetValueAsObject(TargetActorKey, NewPawn);
-	if (const auto EnemyPtr = Cast<ACoopArenaEnemyCharacter>(GetPawn()))
+	if (const auto EnemyPtr = GetPawn<ACoopArenaEnemyCharacter>())
 		EnemyPtr->SetArrivedToStandingPlayer(false);
 }

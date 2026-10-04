@@ -1,4 +1,5 @@
 #include "CoopArenaPlayerController.h"
+#include "AbilitySystemGlobals.h"
 #include "EnhancedInputSubsystems.h"
 #include "AbilitySystem/CoopArenaAttributeSet.h"
 #include "GameFramework/GameModeBase.h"
@@ -7,7 +8,7 @@
 #include "UI/CoopArenaHudWidget.h"
 
 bool ACoopArenaPlayerController::InputKey(const FInputKeyEventArgs& Params) {
-	constexpr static float GamepadDeadZone = 0.25f;
+	static constexpr float GamepadDeadZone = 0.25f;
 
 	const bool bGamepad = Params.IsGamepad();
 	const bool bUsed = Params.Event == IE_Axis
@@ -32,11 +33,11 @@ void ACoopArenaPlayerController::BeginPlay() {
 		if (Hud)
 			Hud->AddToViewport();
 
-		const auto AbilitySystem = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(PlayerState);
-		if (Hud && AbilitySystem) {
-			Attributes = AbilitySystem->GetSet<UCoopArenaAttributeSet>();
-			AbilitySystem->GetGameplayAttributeValueChangeDelegate(UCoopArenaAttributeSet::GetMaxHealthAttribute()).AddUObject(this, &ACoopArenaPlayerController::OnHealthChanged);
-			AbilitySystem->GetGameplayAttributeValueChangeDelegate(UCoopArenaAttributeSet::GetHealthAttribute()).AddUObject(this, &ACoopArenaPlayerController::OnHealthChanged);
+		const auto AbilitySystemPtr = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(PlayerState);
+		if (Hud && AbilitySystemPtr) {
+			Attributes = AbilitySystemPtr->GetSet<UCoopArenaAttributeSet>();
+			AbilitySystemPtr->GetGameplayAttributeValueChangeDelegate(UCoopArenaAttributeSet::GetMaxHealthAttribute()).AddUObject(this, &ACoopArenaPlayerController::OnHealthChanged);
+			AbilitySystemPtr->GetGameplayAttributeValueChangeDelegate(UCoopArenaAttributeSet::GetHealthAttribute()).AddUObject(this, &ACoopArenaPlayerController::OnHealthChanged);
 			OnHealthChanged(FOnAttributeChangeData()); // PossessedBy may have applied the stats already
 		}
 	}
@@ -59,14 +60,13 @@ void ACoopArenaPlayerController::OnPossess(APawn* InPawn) {
 }
 
 void ACoopArenaPlayerController::OnHealthChanged(const FOnAttributeChangeData&) const {
-	if (Hud && Attributes.IsValid()) {
-		if (const auto HealthWidget = Hud->GetHealthWidget())
-			HealthWidget->SetHealth(FMath::RoundToInt(Attributes->GetHealth()), FMath::RoundToInt(Attributes->GetMaxHealth()));
-	}
+	if (Hud && Attributes.IsValid())
+		if (const auto HealthWidgetPtr = Hud->GetHealthWidget())
+			HealthWidgetPtr->SetHealth(FMath::RoundToInt(Attributes->GetHealth()), FMath::RoundToInt(Attributes->GetMaxHealth()));
 }
 
 void ACoopArenaPlayerController::OnPawnDestroyed(AActor*) {
-	if (const auto World = GetWorld(); World && !World->bIsTearingDown)
-		if (const auto GameMode = World->GetAuthGameMode())
-			GameMode->RestartPlayer(this);
+	if (const auto WorldPtr = GetWorld(); WorldPtr && !WorldPtr->bIsTearingDown)
+		if (const auto GameModePtr = WorldPtr->GetAuthGameMode())
+			GameModePtr->RestartPlayer(this);
 }

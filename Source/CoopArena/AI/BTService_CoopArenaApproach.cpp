@@ -1,5 +1,6 @@
 #include "BTService_CoopArenaApproach.h"
 #include "AIController.h"
+#include "NavigationSystem.h"
 #include "BehaviorTree/Blackboard/BlackboardKeyType_Bool.h"
 #include "BehaviorTree/Blackboard/BlackboardKeyType_Object.h"
 #include "BehaviorTree/Blackboard/BlackboardKeyType_Vector.h"
@@ -8,7 +9,6 @@
 #include "Enemy/CoopArenaEnemyCharacter.h"
 #include "Engine/OverlapResult.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "NavigationSystem.h"
 
 #if ENABLE_DRAW_DEBUG
 static TAutoConsoleVariable CVarDebugApproach(TEXT("CoopArena.DebugApproach"), false, TEXT("Draws where each enemy runs"));
@@ -49,7 +49,7 @@ void UBTService_CoopArenaApproach::TickNode(UBehaviorTreeComponent& OwnerComp, u
 	auto& Memory = *CastInstanceNodeMemory<FMemory>(NodeMemory);
 
 	const auto ControllerPtr = OwnerComp.GetAIOwner();
-	const auto EnemyPtr = ControllerPtr ? Cast<ACoopArenaEnemyCharacter>(ControllerPtr->GetPawn().Get()) : nullptr;
+	const auto EnemyPtr = ControllerPtr ? ControllerPtr->GetPawn<ACoopArenaEnemyCharacter>() : nullptr;
 	const auto PlayerPtr = Cast<AActor>(BlackboardPtr->GetValue<UBlackboardKeyType_Object>(TargetActorKeyID));
 	if (!EnemyPtr || !PlayerPtr) {
 		BlackboardPtr->ClearValue(LocationKeyID);
@@ -61,13 +61,13 @@ void UBTService_CoopArenaApproach::TickNode(UBehaviorTreeComponent& OwnerComp, u
 		Memory.StalledFor = 0.0f;
 		return;
 	}
-	const auto NavSystem = UNavigationSystemV1::GetCurrent(OwnerComp.GetWorld());
+	const auto NavSystemPtr = UNavigationSystemV1::GetCurrent(EnemyPtr->GetWorld());
 
-	if (!HandleOffNavmesh(NavSystem, *EnemyPtr, Memory))
+	if (!HandleOffNavmesh(NavSystemPtr, *EnemyPtr, Memory))
 		return;
 
 	// approach
-	const auto PointOpt = ChasePoint(NavSystem, *EnemyPtr, *PlayerPtr, Memory);
+	const auto PointOpt = ChasePoint(NavSystemPtr, *EnemyPtr, *PlayerPtr, Memory);
 	if (const auto PointPtr = PointOpt.GetPtrOrNull())
 		BlackboardPtr->SetValue<UBlackboardKeyType_Vector>(LocationKeyID, *PointPtr);
 	else
@@ -79,18 +79,41 @@ void UBTService_CoopArenaApproach::TickNode(UBehaviorTreeComponent& OwnerComp, u
 
 #if ENABLE_DRAW_DEBUG
 	if (CVarDebugApproach.GetValueOnGameThread()) {
-		const auto World = OwnerComp.GetWorld();
+		const auto WorldPtr = EnemyPtr->GetWorld();
 		const auto EnemyPos = EnemyPtr->GetActorLocation();
 		const auto PlayerPos = PlayerPtr->GetActorLocation();
 		const float Life = Interval + RandomDeviation;
 		const FColor Color = !PointOpt.IsSet() ? FColor::White : EnemyPtr->GetChaseRole() == ECoopArenaEnemyChaseRole::CounterRun ? FColor::Cyan : FColor::Yellow;
-		DrawDebugLine(World, EnemyPos, PointOpt.Get(PlayerPos), Color, false, Life, 0, 2.0f);
+		DrawDebugLine(WorldPtr, EnemyPos, PointOpt.Get(PlayerPos), Color, false, Life, 0, 2.0f);
 		if (PointOpt.IsSet())
-			DrawDebugSphere(World, PointOpt.GetValue(), 30.0f, 8, Color, false, Life);
+			DrawDebugSphere(WorldPtr, PointOpt.GetValue(), 30.0f, 8, Color, false, Life);
 		if (bArrived)
-			DrawDebugSphere(World, EnemyPos + FVector(0.0, 0.0, 120.0), 15.0f, 8, FColor::Red, false, Life);
+			DrawDebugSphere(WorldPtr, EnemyPos + FVector(0.0, 0.0, 120.0), 15.0f, 8, FColor::Red, false, Life);
 	}
 #endif
+}
+
+bool UBTService_CoopArenaApproach::HandleOffNavmesh(const UNavigationSystemV1* NavSystem, ACoopArenaEnemyCharacter& Enemy, FMemory& Memory) {
+	const auto EnemyPos = Enemy.GetActorLocation();
+	FNavLocation OnNavmesh;
+	if (NavSystem && Enemy.GetCharacterMovement()->IsMovingOnGround() && !NavSystem->ProjectPointToNavigation(EnemyPos, OnNavmesh)) {
+		if (++Memory.OffNavmeshTicks < 4)
+			return false;
+		Memory.OffNavmeshTicks = 0;
+		if (NavSystem->ProjectPointToNavigation(EnemyPos, OnNavmesh, FVector(500.0))) {
+			// nudge back to the closest point
+			Enemy.SetActorLocation(
+				OnNavmesh.Location + FVector(0.0, 0.0, Enemy.GetSimpleCollisionHalfHeight()), false,
+				nullptr, ETeleportType::TeleportPhysics
+			);
+		}
+		else {
+			Enemy.Destroy();
+		}
+		return false;
+	}
+	Memory.OffNavmeshTicks = 0;
+	return true;
 }
 
 TOptional<FVector> UBTService_CoopArenaApproach::ChasePoint(const UNavigationSystemV1* NavSystem, ACoopArenaEnemyCharacter& Enemy, const AActor& Player, FMemory& Memory) const {
@@ -128,14 +151,14 @@ TOptional<FVector> UBTService_CoopArenaApproach::ChasePoint(const UNavigationSys
 	if (!Enemy.IsOvertaking())
 		return {};
 
-	const double OrbitSize = static_cast<double>(Memory.bRightOrbitSide) * 2.0 - 1.0;
+	const double OrbitSign = Memory.bRightOrbitSide ? 1.0 : -1.0;
 	const double OrbitRadius = Enemy.GetOvertakeOrbitRadius();
 	const double NextBearing = Bearing - (OrbitRadius > 0.0 ? FMath::RadiansToDegrees(ArcStepDistance / OrbitRadius) : 0.0);
 
 	// offset pursuit: https://www.red3d.com/cwr/steer/gdc99/#:~:text=Figure%205%3A%20offset%20pursuit
 	// the target is a point held at an offset in the moving target's frame
 	// the point moves with the player - aim where it will be when the enemy gets there (pursuit lead, T = distance / speed)
-	auto Point = FVector2D(PlayerPos) + Forward.GetRotated(OrbitSize * NextBearing) * OrbitRadius;
+	auto Point = FVector2D(PlayerPos) + Forward.GetRotated(OrbitSign * NextBearing) * OrbitRadius;
 	if (const double EnemySpeed = Enemy.GetCharacterMovement()->MaxWalkSpeed; EnemySpeed > 0.0) {
 		// https://sourceforge.net/p/opensteer/code/HEAD/tree/trunk/include/OpenSteer/SteerLibrary.h#l936
 		const double T = FVector2D::Distance(Point, FVector2D(EnemyPos)) / EnemySpeed;
@@ -149,29 +172,6 @@ TOptional<FVector> UBTService_CoopArenaApproach::ChasePoint(const UNavigationSys
 		return Projected.Location;
 
 	return {};
-}
-
-bool UBTService_CoopArenaApproach::HandleOffNavmesh(const UNavigationSystemV1* NavSystem, ACoopArenaEnemyCharacter& Enemy, FMemory& Memory) {
-	const auto EnemyPos = Enemy.GetActorLocation();
-	FNavLocation OnNavmesh;
-	if (NavSystem && Enemy.GetCharacterMovement()->IsMovingOnGround() && !NavSystem->ProjectPointToNavigation(EnemyPos, OnNavmesh)) {
-		if (++Memory.OffNavmeshTicks < 4)
-			return false;
-		Memory.OffNavmeshTicks = 0;
-		if (NavSystem->ProjectPointToNavigation(EnemyPos, OnNavmesh, FVector(500.0))) {
-			// nudge back to the closest point
-			Enemy.SetActorLocation(
-				OnNavmesh.Location + FVector(0.0, 0.0, Enemy.GetSimpleCollisionHalfHeight()), false,
-				nullptr, ETeleportType::TeleportPhysics
-			);
-		}
-		else {
-			Enemy.Destroy();
-		}
-		return false;
-	}
-	Memory.OffNavmeshTicks = 0;
-	return true;
 }
 
 bool UBTService_CoopArenaApproach::IsArrived(ACoopArenaEnemyCharacter& Enemy, const AActor& Player, FMemory& Memory, const float DeltaSeconds) const {
@@ -200,7 +200,7 @@ bool UBTService_CoopArenaApproach::IsArrived(ACoopArenaEnemyCharacter& Enemy, co
 	// an enemy death dropped the latch - give the crowd a moment to move into the gap before the neighbors anchor it again
 	bool bNeighboursAnchor = true;
 	if (Enemy.IsRepackingAfterDeath()) {
-		const uint32 DeathCount = ACoopArenaGameState::GetEnemyDeathCount(GetWorld());
+		const uint32 DeathCount = ACoopArenaGameState::GetEnemyDeathCount(Enemy.GetWorld());
 		if (Memory.RepackingDeathCount != DeathCount) {
 			// every further death restarts the window
 			Memory.RepackingDeathCount = DeathCount;

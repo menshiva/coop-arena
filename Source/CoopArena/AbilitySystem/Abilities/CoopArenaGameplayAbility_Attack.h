@@ -22,6 +22,9 @@ protected:
 	float Speed = 2000.0f;
 
 	UPROPERTY(EditDefaultsOnly, Category="Attack")
+	float TargetSweepRadius = 50.0f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Attack")
 	FInt32Interval DamageRange = FInt32Interval(10, 20);
 
 	UPROPERTY(EditDefaultsOnly, Category="Attack")

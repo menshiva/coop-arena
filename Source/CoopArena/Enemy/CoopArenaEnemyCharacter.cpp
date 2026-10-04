@@ -87,7 +87,7 @@ void ACoopArenaEnemyCharacter::SetArrivedToStandingPlayer(const bool bValue) {
 
 void ACoopArenaEnemyCharacter::OnHealthChanged(const FOnAttributeChangeData&) const {
 	if (const auto Widget = Cast<UCoopArenaHealthWidget>(HealthWidget->GetWidget())) {
-		Widget->OnHealthChanged(FMath::RoundToInt(Attributes->GetHealth()), FMath::RoundToInt(Attributes->GetMaxHealth()));
+		Widget->SetHealth(FMath::RoundToInt(Attributes->GetHealth()), FMath::RoundToInt(Attributes->GetMaxHealth()));
 		HealthWidget->RequestRenderUpdate();
 	}
 }

@@ -3,8 +3,10 @@
 #include "GameFramework/PlayerController.h"
 #include "CoopArenaPlayerController.generated.h"
 
-class UUserWidget;
+class UCoopArenaHudWidget;
 class UInputMappingContext;
+struct FOnAttributeChangeData;
+class UCoopArenaAttributeSet;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FCoopArenaOnInputDeviceChanged, bool /*bGamepad*/);
 
@@ -22,10 +24,17 @@ protected:
 	virtual void SetupInputComponent() override;
 
 	UPROPERTY(EditDefaultsOnly, Category="UI")
-	TSubclassOf<UUserWidget> HudWidgetClass;
+	TSubclassOf<UCoopArenaHudWidget> HudWidgetClass;
 
 	UPROPERTY(EditAnywhere, Category ="Input|Input Mappings")
 	TArray<UInputMappingContext*> DefaultMappingContexts;
 private:
+	void OnHealthChanged(const FOnAttributeChangeData& Data) const;
+
 	bool bUsingGamepad = false;
+
+	UPROPERTY()
+	TObjectPtr<UCoopArenaHudWidget> Hud;
+
+	TWeakObjectPtr<const UCoopArenaAttributeSet> Attributes;
 };

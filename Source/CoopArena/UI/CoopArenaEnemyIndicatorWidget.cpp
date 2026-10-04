@@ -1,6 +1,4 @@
 #include "CoopArenaEnemyIndicatorWidget.h"
-#include "Blueprint/WidgetLayoutLibrary.h"
-#include "Components/CanvasPanelSlot.h"
 #include "Components/Image.h"
 #include "Enemy/CoopArenaEnemyCharacter.h"
 #include "EngineUtils.h"
@@ -8,17 +6,13 @@
 void UCoopArenaEnemyIndicatorWidget::NativeTick(const FGeometry& MyGeometry, const float InDeltaTime) {
 	Super::NativeTick(MyGeometry, InDeltaTime);
 
+	if (!Ring)
+		return;
+
 	const auto PawnPtr = GetOwningPlayerPawn();
 	const auto CameraManager = GetOwningPlayerCameraManager();
 	const auto Material = Ring->GetDynamicMaterial();
-	const auto SlotPtr = Cast<UCanvasPanelSlot>(Ring->Slot);
-	if (!PawnPtr || !CameraManager || !Material || !SlotPtr) {
-		Ring->SetVisibility(ESlateVisibility::Hidden);
-		return;
-	}
-
-	FVector2D Center;
-	if (!UWidgetLayoutLibrary::ProjectWorldLocationToWidgetPosition(GetOwningPlayer(), PawnPtr->GetActorLocation(), Center, false)) {
+	if (!PawnPtr || !CameraManager || !Material) {
 		Ring->SetVisibility(ESlateVisibility::Hidden);
 		return;
 	}
@@ -57,8 +51,6 @@ void UCoopArenaEnemyIndicatorWidget::NativeTick(const FGeometry& MyGeometry, con
 
 		static const FName ArcHalfAngleParam(TEXT("ArcHalfAngle"));
 		Material->SetScalarParameterValue(ArcHalfAngleParam, 1.5f * SectorAngleDegree);
-
-		SlotPtr->SetPosition(Center);
 	}
 
 	Ring->SetVisibility(bAnyOccupied ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Hidden);

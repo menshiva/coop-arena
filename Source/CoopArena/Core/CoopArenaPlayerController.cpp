@@ -1,6 +1,9 @@
 #include "CoopArenaPlayerController.h"
 #include "EnhancedInputSubsystems.h"
-#include "Blueprint/UserWidget.h"
+#include "AbilitySystem/CoopArenaAttributeSet.h"
+#include "GameFramework/PlayerState.h"
+#include "UI/CoopArenaHealthWidget.h"
+#include "UI/CoopArenaHudWidget.h"
 
 void ACoopArenaPlayerController::BeginPlay() {
 	Super::BeginPlay();
@@ -9,8 +12,24 @@ void ACoopArenaPlayerController::BeginPlay() {
 		bUsingGamepad = FSlateApplication::IsInitialized() && FSlateApplication::Get().IsGamepadAttached();
 
 		if (HudWidgetClass)
-			if (const auto HudWidget = CreateWidget<UUserWidget>(this, HudWidgetClass))
-				HudWidget->AddToViewport();
+			Hud = CreateWidget<UCoopArenaHudWidget>(this, HudWidgetClass);
+		if (Hud)
+			Hud->AddToViewport();
+
+		const auto AbilitySystem = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(PlayerState);
+		if (Hud && AbilitySystem) {
+			Attributes = AbilitySystem->GetSet<UCoopArenaAttributeSet>();
+			AbilitySystem->GetGameplayAttributeValueChangeDelegate(UCoopArenaAttributeSet::GetMaxHealthAttribute()).AddUObject(this, &ACoopArenaPlayerController::OnHealthChanged);
+			AbilitySystem->GetGameplayAttributeValueChangeDelegate(UCoopArenaAttributeSet::GetHealthAttribute()).AddUObject(this, &ACoopArenaPlayerController::OnHealthChanged);
+			OnHealthChanged(FOnAttributeChangeData()); // PossessedBy may have applied the stats already
+		}
+	}
+}
+
+void ACoopArenaPlayerController::OnHealthChanged(const FOnAttributeChangeData&) const {
+	if (Hud && Attributes.IsValid()) {
+		if (const auto HealthWidget = Hud->GetHealthWidget())
+			HealthWidget->SetHealth(FMath::RoundToInt(Attributes->GetHealth()), FMath::RoundToInt(Attributes->GetMaxHealth()));
 	}
 }
 

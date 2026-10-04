@@ -1,9 +1,25 @@
 #include "CoopArenaPlayerController.h"
 #include "EnhancedInputSubsystems.h"
 #include "AbilitySystem/CoopArenaAttributeSet.h"
+#include "GameFramework/GameModeBase.h"
 #include "GameFramework/PlayerState.h"
 #include "UI/CoopArenaHealthWidget.h"
 #include "UI/CoopArenaHudWidget.h"
+
+bool ACoopArenaPlayerController::InputKey(const FInputKeyEventArgs& Params) {
+	constexpr static float GamepadDeadZone = 0.25f;
+
+	const bool bGamepad = Params.IsGamepad();
+	const bool bUsed = Params.Event == IE_Axis
+		? FMath::Abs(Params.AmountDepressed) > (bGamepad ? GamepadDeadZone : 0.0f)
+		: Params.Event != IE_Released;
+	if (bUsed && bUsingGamepad != bGamepad) {
+		bUsingGamepad = bGamepad;
+		OnInputDeviceChanged.Broadcast(bGamepad);
+	}
+
+	return Super::InputKey(Params);
+}
 
 void ACoopArenaPlayerController::BeginPlay() {
 	Super::BeginPlay();
@@ -26,13 +42,6 @@ void ACoopArenaPlayerController::BeginPlay() {
 	}
 }
 
-void ACoopArenaPlayerController::OnHealthChanged(const FOnAttributeChangeData&) const {
-	if (Hud && Attributes.IsValid()) {
-		if (const auto HealthWidget = Hud->GetHealthWidget())
-			HealthWidget->SetHealth(FMath::RoundToInt(Attributes->GetHealth()), FMath::RoundToInt(Attributes->GetMaxHealth()));
-	}
-}
-
 void ACoopArenaPlayerController::SetupInputComponent() {
 	Super::SetupInputComponent();
 
@@ -42,17 +51,22 @@ void ACoopArenaPlayerController::SetupInputComponent() {
 				SubsystemPtr->AddMappingContext(CurrentContextPtr, 0);
 }
 
-bool ACoopArenaPlayerController::InputKey(const FInputKeyEventArgs& Params) {
-	constexpr static float GamepadDeadZone = 0.25f;
+void ACoopArenaPlayerController::OnPossess(APawn* InPawn) {
+	Super::OnPossess(InPawn);
 
-	const bool bGamepad = Params.IsGamepad();
-	const bool bUsed = Params.Event == IE_Axis
-		? FMath::Abs(Params.AmountDepressed) > (bGamepad ? GamepadDeadZone : 0.0f)
-		: Params.Event != IE_Released;
-	if (bUsed && bUsingGamepad != bGamepad) {
-		bUsingGamepad = bGamepad;
-		OnInputDeviceChanged.Broadcast(bGamepad);
+	if (InPawn)
+		InPawn->OnDestroyed.AddUniqueDynamic(this, &ACoopArenaPlayerController::OnPawnDestroyed);
+}
+
+void ACoopArenaPlayerController::OnHealthChanged(const FOnAttributeChangeData&) const {
+	if (Hud && Attributes.IsValid()) {
+		if (const auto HealthWidget = Hud->GetHealthWidget())
+			HealthWidget->SetHealth(FMath::RoundToInt(Attributes->GetHealth()), FMath::RoundToInt(Attributes->GetMaxHealth()));
 	}
+}
 
-	return Super::InputKey(Params);
+void ACoopArenaPlayerController::OnPawnDestroyed(AActor*) {
+	if (const auto World = GetWorld(); World && !World->bIsTearingDown)
+		if (const auto GameMode = World->GetAuthGameMode())
+			GameMode->RestartPlayer(this);
 }

@@ -13,6 +13,8 @@ public:
 	ACoopArenaPlayerState();
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystem; }
+
+	FORCEINLINE UCoopArenaAttributeSet* GetAttributes() const { return Attributes; }
 private:
 	UPROPERTY()
 	TObjectPtr<UAbilitySystemComponent> AbilitySystem;

@@ -16,4 +16,7 @@ protected:
 private:
 	UFUNCTION()
 	void OnLanded(const FHitResult& Hit);
+
+	UFUNCTION()
+	void OnPlayerPawnChanged(APawn* OldPawn, APawn* NewPawn) const;
 };

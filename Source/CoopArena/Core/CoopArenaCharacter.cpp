@@ -1,5 +1,4 @@
 #include "CoopArenaCharacter.h"
-#include "AbilitySystemComponent.h"
 #include "CoopArena.h"
 #include "CoopArenaPlayerState.h"
 #include "Camera/CameraComponent.h"
@@ -7,6 +6,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "AbilitySystem/Abilities/CoopArenaGameplayAbility.h"
+#include "AbilitySystem/CoopArenaAttributeSet.h"
 
 ACoopArenaCharacter::ACoopArenaCharacter() {
 	GetCapsuleComponent()->InitCapsuleSize(32.f, 90.0f);
@@ -39,16 +39,27 @@ void ACoopArenaCharacter::PossessedBy(AController* NewController) {
 		AbilitySystem = StatePtr->GetAbilitySystemComponent();
 		AbilitySystem->InitAbilityActorInfo(StatePtr, this);
 
-		if (InitStatsEffect) {
-			auto Context = AbilitySystem->MakeEffectContext();
-			Context.AddSourceObject(this);
-			AbilitySystem->ApplyGameplayEffectToSelf(InitStatsEffect->GetDefaultObject<UGameplayEffect>(), 1.0f, Context);
-		}
+		auto Context = AbilitySystem->MakeEffectContext();
+		Context.AddSourceObject(this);
+		for (const auto& Effect : {InitStatsEffect, SpawnProtectionEffect})
+			if (Effect)
+				AbilitySystem->ApplyGameplayEffectToSelf(Effect->GetDefaultObject<UGameplayEffect>(), 1.0f, Context);
 
 		for (const auto& Binding : AbilityBindings)
 			if (Binding.bGrantedAtStart && Binding.AbilityClass && !AbilitySystem->FindAbilitySpecFromClass(Binding.AbilityClass))
 				AbilitySystem->GiveAbility(FGameplayAbilitySpec(Binding.AbilityClass, 1));
+
+		StatePtr->GetAttributes()->OnDeath.AddUObject(this, &ACoopArenaCharacter::OnDeath);
 	}
+}
+
+void ACoopArenaCharacter::UnPossessed() {
+	if (const auto StatePtr = GetPlayerState<ACoopArenaPlayerState>()) {
+		StatePtr->GetAttributes()->OnDeath.RemoveAll(this);
+		StatePtr->GetAbilitySystemComponent()->CancelAllAbilities();
+	}
+
+	Super::UnPossessed();
 }
 
 void ACoopArenaCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) {
@@ -99,4 +110,8 @@ void ACoopArenaCharacter::Look(const FInputActionValue& Value) {
 void ACoopArenaCharacter::OnAbilityInput(const FGameplayTag AbilityTag) {
 	if (AbilitySystem.IsValid())
 		AbilitySystem->TryActivateAbilitiesByTag(FGameplayTagContainer(AbilityTag));
+}
+
+void ACoopArenaCharacter::OnDeath(AActor*) {
+	Destroy();
 }

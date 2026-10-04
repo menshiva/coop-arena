@@ -22,6 +22,7 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
+	virtual void OnPossess(APawn* InPawn) override;
 
 	UPROPERTY(EditDefaultsOnly, Category="UI")
 	TSubclassOf<UCoopArenaHudWidget> HudWidgetClass;
@@ -30,6 +31,9 @@ protected:
 	TArray<UInputMappingContext*> DefaultMappingContexts;
 private:
 	void OnHealthChanged(const FOnAttributeChangeData& Data) const;
+
+	UFUNCTION()
+	void OnPawnDestroyed(AActor* DestroyedActor);
 
 	bool bUsingGamepad = false;
 

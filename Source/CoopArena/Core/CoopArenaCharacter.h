@@ -37,6 +37,8 @@ public:
 	ACoopArenaCharacter();
 
 	virtual void PossessedBy(AController* NewController) override;
+	virtual void UnPossessed() override;
+
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystem.Get(); }
@@ -67,8 +69,12 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category="Abilities")
 	TSubclassOf<UGameplayEffect> InitStatsEffect;
+
+	UPROPERTY(EditDefaultsOnly, Category="Abilities")
+	TSubclassOf<UGameplayEffect> SpawnProtectionEffect;
 private:
 	void OnAbilityInput(FGameplayTag AbilityTag);
+	void OnDeath(AActor* Killer);
 
 	UPROPERTY()
 	TWeakObjectPtr<UAbilitySystemComponent> AbilitySystem;

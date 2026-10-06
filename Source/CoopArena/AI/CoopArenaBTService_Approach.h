@@ -1,16 +1,16 @@
 #pragma once
 
 #include "BehaviorTree/BTService.h"
-#include "BTService_CoopArenaApproach.generated.h"
+#include "CoopArenaBTService_Approach.generated.h"
 
 class UNavigationSystemV1;
 class ACoopArenaEnemyCharacter;
 
 UCLASS()
-class UBTService_CoopArenaApproach : public UBTService {
+class UCoopArenaBTService_Approach : public UBTService {
 	GENERATED_BODY()
 public:
-	UBTService_CoopArenaApproach();
+	UCoopArenaBTService_Approach();
 
 	virtual void InitializeFromAsset(UBehaviorTree& Asset) override;
 

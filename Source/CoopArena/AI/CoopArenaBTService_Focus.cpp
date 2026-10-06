@@ -1,7 +1,7 @@
-#include "BTService_CoopArenaFocus.h"
+#include "CoopArenaBTService_Focus.h"
 #include "AIController.h"
 
-UBTService_CoopArenaFocus::UBTService_CoopArenaFocus() {
+UCoopArenaBTService_Focus::UCoopArenaBTService_Focus() {
 	NodeName = "Focus";
 	FocusPriority = EAIFocusPriority::Gameplay;
 }

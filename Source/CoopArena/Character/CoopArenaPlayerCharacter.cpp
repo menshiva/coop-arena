@@ -1,13 +1,13 @@
-#include "CoopArenaCharacter.h"
-#include "CoopArenaPlayerState.h"
+#include "CoopArenaPlayerCharacter.h"
 #include "EnhancedInputComponent.h"
 #include "AbilitySystem/Abilities/CoopArenaGameplayAbility.h"
-#include "AbilitySystem/CoopArenaAttributeSet.h"
+#include "AbilitySystem/Attributes/CoopArenaAttributeSet.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Player/CoopArenaPlayerState.h"
 
-ACoopArenaCharacter::ACoopArenaCharacter() {
+ACoopArenaPlayerCharacter::ACoopArenaPlayerCharacter() {
 	GetCapsuleComponent()->InitCapsuleSize(32.0f, 90.0f);
 
 	// Don't rotate when the controller rotates. Let that just affect the camera.
@@ -30,7 +30,7 @@ ACoopArenaCharacter::ACoopArenaCharacter() {
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 }
 
-void ACoopArenaCharacter::PossessedBy(AController* NewController) {
+void ACoopArenaPlayerCharacter::PossessedBy(AController* NewController) {
 	Super::PossessedBy(NewController);
 
 	if (const auto StatePtr = GetPlayerState<ACoopArenaPlayerState>()) {
@@ -45,11 +45,11 @@ void ACoopArenaCharacter::PossessedBy(AController* NewController) {
 			if (Binding.bGrantedAtStart && Binding.AbilityClass && !AbilitySystem->FindAbilitySpecFromClass(Binding.AbilityClass))
 				AbilitySystem->GiveAbility(FGameplayAbilitySpec(Binding.AbilityClass, 1));
 
-		StatePtr->GetAttributes()->OnDeath.AddUObject(this, &ACoopArenaCharacter::OnDeath);
+		StatePtr->GetAttributes()->OnDeath.AddUObject(this, &ACoopArenaPlayerCharacter::OnDeath);
 	}
 }
 
-void ACoopArenaCharacter::UnPossessed() {
+void ACoopArenaPlayerCharacter::UnPossessed() {
 	if (const auto StatePtr = GetPlayerState<ACoopArenaPlayerState>()) {
 		StatePtr->GetAttributes()->OnDeath.RemoveAll(this);
 		StatePtr->GetAbilitySystemComponent()->CancelAllAbilities();
@@ -58,11 +58,11 @@ void ACoopArenaCharacter::UnPossessed() {
 	Super::UnPossessed();
 }
 
-void ACoopArenaCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) {
+void ACoopArenaPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) {
 	if (const auto EnhancedInputComponentPtr = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
 		// Moving
-		EnhancedInputComponentPtr->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ACoopArenaCharacter::Move);
-		EnhancedInputComponentPtr->BindAction(LookAction, ETriggerEvent::Triggered, this, &ACoopArenaCharacter::Look);
+		EnhancedInputComponentPtr->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ACoopArenaPlayerCharacter::Move);
+		EnhancedInputComponentPtr->BindAction(LookAction, ETriggerEvent::Triggered, this, &ACoopArenaPlayerCharacter::Look);
 
 		// Jumping
 		EnhancedInputComponentPtr->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
@@ -71,11 +71,11 @@ void ACoopArenaCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 		// Abilities
 		for (const auto& Binding : AbilityBindings)
 			if (Binding.InputAction)
-				EnhancedInputComponentPtr->BindAction(Binding.InputAction, ETriggerEvent::Started, this, &ACoopArenaCharacter::OnAbilityInput, Binding.AbilityTag);
+				EnhancedInputComponentPtr->BindAction(Binding.InputAction, ETriggerEvent::Started, this, &ACoopArenaPlayerCharacter::OnAbilityInput, Binding.AbilityTag);
 	}
 }
 
-void ACoopArenaCharacter::Move(const FInputActionValue& Value) {
+void ACoopArenaPlayerCharacter::Move(const FInputActionValue& Value) {
 	if (const auto ControllerPtr = GetController()) {
 		const auto MovementVector = Value.Get<FVector2D>();
 
@@ -91,7 +91,7 @@ void ACoopArenaCharacter::Move(const FInputActionValue& Value) {
 	}
 }
 
-void ACoopArenaCharacter::Look(const FInputActionValue& Value) {
+void ACoopArenaPlayerCharacter::Look(const FInputActionValue& Value) {
 	if (GetController()) {
 		const auto LookAxisVector = Value.Get<FVector2D>();
 		AddControllerYawInput(LookAxisVector.X);
@@ -99,11 +99,11 @@ void ACoopArenaCharacter::Look(const FInputActionValue& Value) {
 	}
 }
 
-void ACoopArenaCharacter::OnAbilityInput(const FGameplayTag AbilityTag) {
+void ACoopArenaPlayerCharacter::OnAbilityInput(const FGameplayTag AbilityTag) {
 	if (AbilitySystem.IsValid())
 		AbilitySystem->TryActivateAbilitiesByTag(FGameplayTagContainer(AbilityTag));
 }
 
-void ACoopArenaCharacter::OnDeath(AActor*) {
+void ACoopArenaPlayerCharacter::OnDeath(AActor*) {
 	Destroy();
 }

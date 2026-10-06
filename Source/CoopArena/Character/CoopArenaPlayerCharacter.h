@@ -3,7 +3,7 @@
 #include "AbilitySystemInterface.h"
 #include "GameplayTagContainer.h"
 #include "GameFramework/Character.h"
-#include "CoopArenaCharacter.generated.h"
+#include "CoopArenaPlayerCharacter.generated.h"
 
 class UInputAction;
 class UCoopArenaGameplayAbility;
@@ -31,10 +31,10 @@ struct FCoopArenaAbilityBinding {
 };
 
 UCLASS(Abstract)
-class ACoopArenaCharacter : public ACharacter, public IAbilitySystemInterface {
+class ACoopArenaPlayerCharacter : public ACharacter, public IAbilitySystemInterface {
 	GENERATED_BODY()
 public:
-	ACoopArenaCharacter();
+	ACoopArenaPlayerCharacter();
 
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void UnPossessed() override;

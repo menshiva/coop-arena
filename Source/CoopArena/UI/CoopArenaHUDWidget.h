@@ -1,12 +1,12 @@
 #pragma once
 
 #include "Blueprint/UserWidget.h"
-#include "CoopArenaHudWidget.generated.h"
+#include "CoopArenaHUDWidget.generated.h"
 
 class UCoopArenaHealthWidget;
 
 UCLASS(Abstract)
-class UCoopArenaHudWidget : public UUserWidget {
+class UCoopArenaHUDWidget : public UUserWidget {
 	GENERATED_BODY()
 public:
 	FORCEINLINE UCoopArenaHealthWidget* GetHealthWidget() const { return HealthWidget; }

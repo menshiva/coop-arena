@@ -1,13 +1,13 @@
 #pragma once
 
 #include "BehaviorTree/Services/BTService_BlackboardBase.h"
-#include "BTService_CoopArenaAttack.generated.h"
+#include "CoopArenaBTService_Attack.generated.h"
 
 UCLASS()
-class UBTService_CoopArenaAttack : public UBTService_BlackboardBase {
+class UCoopArenaBTService_Attack : public UBTService_BlackboardBase {
 	GENERATED_BODY()
 public:
-	UBTService_CoopArenaAttack();
+	UCoopArenaBTService_Attack();
 protected:
 	virtual void TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
 };

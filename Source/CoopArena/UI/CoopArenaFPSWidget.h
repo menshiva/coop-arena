@@ -1,10 +1,10 @@
 #pragma once
 
 #include "Blueprint/UserWidget.h"
-#include "CoopArenaFpsWidget.generated.h"
+#include "CoopArenaFPSWidget.generated.h"
 
 UCLASS(Abstract)
-class UCoopArenaFpsWidget : public UUserWidget {
+class UCoopArenaFPSWidget : public UUserWidget {
 	GENERATED_BODY()
 protected:
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;

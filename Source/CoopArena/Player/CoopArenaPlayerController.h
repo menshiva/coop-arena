@@ -3,7 +3,7 @@
 #include "GameFramework/PlayerController.h"
 #include "CoopArenaPlayerController.generated.h"
 
-class UCoopArenaHudWidget;
+class UCoopArenaHUDWidget;
 class UInputMappingContext;
 struct FOnAttributeChangeData;
 class UCoopArenaAttributeSet;
@@ -25,7 +25,7 @@ protected:
 	virtual void OnPossess(APawn* InPawn) override;
 
 	UPROPERTY(EditDefaultsOnly, Category="UI")
-	TSubclassOf<UCoopArenaHudWidget> HudWidgetClass;
+	TSubclassOf<UCoopArenaHUDWidget> HudWidgetClass;
 
 	UPROPERTY(EditDefaultsOnly, Category="Input|Input Mappings")
 	TArray<TObjectPtr<UInputMappingContext>> DefaultMappingContexts;
@@ -38,7 +38,7 @@ private:
 	bool bUsingGamepad = false;
 
 	UPROPERTY()
-	TObjectPtr<UCoopArenaHudWidget> Hud;
+	TObjectPtr<UCoopArenaHUDWidget> Hud;
 
 	TWeakObjectPtr<const UCoopArenaAttributeSet> Attributes;
 };

@@ -1,7 +1,7 @@
 #include "CoopArenaEnemyIndicatorWidget.h"
 #include "EngineUtils.h"
+#include "Character/CoopArenaEnemyCharacter.h"
 #include "Components/Image.h"
-#include "Enemy/CoopArenaEnemyCharacter.h"
 
 void UCoopArenaEnemyIndicatorWidget::NativeTick(const FGeometry& MyGeometry, const float InDeltaTime) {
 	Super::NativeTick(MyGeometry, InDeltaTime);

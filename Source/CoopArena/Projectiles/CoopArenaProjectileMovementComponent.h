@@ -1,15 +1,15 @@
 #pragma once
 
 #include "GameFramework/ProjectileMovementComponent.h"
-#include "CoopArenaProjectileMovement.generated.h"
+#include "CoopArenaProjectileMovementComponent.generated.h"
 
 class ACoopArenaProjectileManager;
 
 UCLASS(Abstract, Blueprintable)
-class UCoopArenaProjectileMovement : public UProjectileMovementComponent {
+class UCoopArenaProjectileMovementComponent : public UProjectileMovementComponent {
 	GENERATED_BODY()
 public:
-	UCoopArenaProjectileMovement();
+	UCoopArenaProjectileMovementComponent();
 
 	void Init(ACoopArenaProjectileManager* InManager, int32 InSlotIndex);
 protected:

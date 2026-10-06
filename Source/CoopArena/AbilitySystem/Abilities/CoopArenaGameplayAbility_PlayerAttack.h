@@ -1,15 +1,15 @@
 #pragma once
 
 #include "CoopArenaGameplayAbility_AttackBase.h"
-#include "CoopArenaGameplayAbility_Attack.generated.h"
+#include "CoopArenaGameplayAbility_PlayerAttack.generated.h"
 
 class ACoopArenaProjectileManager;
 
 UCLASS(Abstract)
-class UCoopArenaGameplayAbility_Attack : public UCoopArenaGameplayAbility_AttackBase {
+class UCoopArenaGameplayAbility_PlayerAttack : public UCoopArenaGameplayAbility_AttackBase {
 	GENERATED_BODY()
 public:
-	UCoopArenaGameplayAbility_Attack();
+	UCoopArenaGameplayAbility_PlayerAttack();
 
 	virtual int32 GetDamage(const FGameplayEffectContextHandle& Context) const override;
 protected:

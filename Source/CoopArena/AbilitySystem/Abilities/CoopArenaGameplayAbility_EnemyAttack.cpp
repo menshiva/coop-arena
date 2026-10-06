@@ -4,7 +4,7 @@
 #include "EngineUtils.h"
 #include "Algo/SelectRandomWeighted.h"
 #include "Animation/CoopArenaAnimNotify_SendGameplayEvent.h"
-#include "Core/CoopArenaCharacter.h"
+#include "Character/CoopArenaPlayerCharacter.h"
 
 UCoopArenaGameplayAbility_EnemyAttack::UCoopArenaGameplayAbility_EnemyAttack() {
 	SetAssetTags(FGameplayTagContainer(CoopArena_Ability_Attack_Enemy_Basic));
@@ -49,7 +49,7 @@ void UCoopArenaGameplayAbility_EnemyAttack::OnAttackEvent(FGameplayEventData) {
 	const auto Forward = FVector2D(EnemyPtr->GetActorForwardVector());
 	const float MinCos = FMath::Cos(FMath::DegreesToRadians(HitHalfAngle));
 
-	for (TActorIterator<ACoopArenaCharacter> It(GetWorld()); It; ++It) {
+	for (TActorIterator<ACoopArenaPlayerCharacter> It(GetWorld()); It; ++It) {
 		const auto ToPlayer = It->GetActorLocation() - EnemyPos;
 		if (ToPlayer.SizeSquared() > FMath::Square(HitDistance))
 			continue;

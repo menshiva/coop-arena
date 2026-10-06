@@ -1,4 +1,4 @@
-#include "BTService_CoopArenaAttack.h"
+#include "CoopArenaBTService_Attack.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "AIController.h"
@@ -9,16 +9,16 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
-UBTService_CoopArenaAttack::UBTService_CoopArenaAttack() {
+UCoopArenaBTService_Attack::UCoopArenaBTService_Attack() {
 	NodeName = "Attack";
 
 	Interval = 0.1f;
 	RandomDeviation = 0.05f;
 
-	BlackboardKey.AddObjectFilter(this, GET_MEMBER_NAME_CHECKED(UBTService_CoopArenaAttack, BlackboardKey), AActor::StaticClass());
+	BlackboardKey.AddObjectFilter(this, GET_MEMBER_NAME_CHECKED(UCoopArenaBTService_Attack, BlackboardKey), AActor::StaticClass());
 }
 
-void UBTService_CoopArenaAttack::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, const float DeltaSeconds) {
+void UCoopArenaBTService_Attack::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, const float DeltaSeconds) {
 	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
 
 	const auto ControllerPtr = OwnerComp.GetAIOwner();

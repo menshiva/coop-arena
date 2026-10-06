@@ -1,6 +1,6 @@
 #include "CoopArenaAIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
-#include "Enemy/CoopArenaEnemyCharacter.h"
+#include "Character/CoopArenaEnemyCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "Navigation/CrowdFollowingComponent.h"
 

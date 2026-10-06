@@ -1,9 +1,9 @@
-#include "CoopArenaProjectileMovement.h"
+#include "CoopArenaProjectileMovementComponent.h"
 #include "CoopArenaProjectileManager.h"
 #include "Engine/World.h"
 #include "GameFramework/WorldSettings.h"
 
-UCoopArenaProjectileMovement::UCoopArenaProjectileMovement() {
+UCoopArenaProjectileMovementComponent::UCoopArenaProjectileMovementComponent() {
 	PrimaryComponentTick.bCanEverTick = true;
 	PrimaryComponentTick.bStartWithTickEnabled = false;
 	PrimaryComponentTick.bAllowTickOnDedicatedServer = false;
@@ -15,19 +15,19 @@ UCoopArenaProjectileMovement::UCoopArenaProjectileMovement() {
 	bAutoRegisterPhysicsVolumeUpdates = false;
 }
 
-void UCoopArenaProjectileMovement::Init(ACoopArenaProjectileManager* InManager, const int32 InSlotIndex) {
+void UCoopArenaProjectileMovementComponent::Init(ACoopArenaProjectileManager* InManager, const int32 InSlotIndex) {
 	Manager = InManager;
 	SlotIndex = InSlotIndex;
 }
 
-void UCoopArenaProjectileMovement::HandleImpact(const FHitResult& Hit, const float TimeSlice, const FVector& MoveDelta) {
+void UCoopArenaProjectileMovementComponent::HandleImpact(const FHitResult& Hit, const float TimeSlice, const FVector& MoveDelta) {
 	if (Manager.IsValid())
 		Manager->OnBallImpact(SlotIndex, Hit);
 
 	Super::HandleImpact(Hit, TimeSlice, MoveDelta);
 }
 
-bool UCoopArenaProjectileMovement::CheckStillInWorld() {
+bool UCoopArenaProjectileMovementComponent::CheckStillInWorld() {
 	// the engine checks KillZ against the owner (manager), not the ball
 	if (UpdatedComponent) {
 		const auto WorldSettingsPtr = GetWorld()->GetWorldSettings();
@@ -41,7 +41,7 @@ bool UCoopArenaProjectileMovement::CheckStillInWorld() {
 	return Super::CheckStillInWorld();
 }
 
-void UCoopArenaProjectileMovement::StopSimulating(const FHitResult& HitResult) {
+void UCoopArenaProjectileMovementComponent::StopSimulating(const FHitResult& HitResult) {
 	Super::StopSimulating(HitResult);
 
 	if (Manager.IsValid())

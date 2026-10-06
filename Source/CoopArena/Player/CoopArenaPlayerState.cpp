@@ -1,5 +1,5 @@
 #include "CoopArenaPlayerState.h"
-#include "AbilitySystem/CoopArenaAttributeSet.h"
+#include "AbilitySystem/Attributes/CoopArenaAttributeSet.h"
 
 ACoopArenaPlayerState::ACoopArenaPlayerState() {
 	AbilitySystem = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystem"));

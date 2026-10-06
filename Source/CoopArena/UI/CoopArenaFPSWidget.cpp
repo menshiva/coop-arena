@@ -1,10 +1,10 @@
-#include "CoopArenaFpsWidget.h"
+#include "CoopArenaFPSWidget.h"
 
 // what 'stat fps' shows
 extern ENGINE_API float GAverageFPS;
 extern ENGINE_API float GAverageMS;
 
-void UCoopArenaFpsWidget::NativeTick(const FGeometry& MyGeometry, const float InDeltaTime) {
+void UCoopArenaFPSWidget::NativeTick(const FGeometry& MyGeometry, const float InDeltaTime) {
 	Super::NativeTick(MyGeometry, InDeltaTime);
 
 	const int32 Fps = FMath::RoundToInt(GAverageFPS);

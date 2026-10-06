@@ -1,12 +1,12 @@
 #pragma once
 
 #include "BehaviorTree/Services/BTService_DefaultFocus.h"
-#include "BTService_CoopArenaFocus.generated.h"
+#include "CoopArenaBTService_Focus.generated.h"
 
 // custom focus so that enemy would look at the player instead of along the arc
 UCLASS()
-class UBTService_CoopArenaFocus : public UBTService_DefaultFocus {
+class UCoopArenaBTService_Focus : public UBTService_DefaultFocus {
 	GENERATED_BODY()
 public:
-	UBTService_CoopArenaFocus();
+	UCoopArenaBTService_Focus();
 };

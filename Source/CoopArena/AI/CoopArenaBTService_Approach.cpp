@@ -1,29 +1,29 @@
-#include "BTService_CoopArenaApproach.h"
+#include "CoopArenaBTService_Approach.h"
 #include "AIController.h"
 #include "NavigationSystem.h"
 #include "BehaviorTree/Blackboard/BlackboardKeyType_Bool.h"
 #include "BehaviorTree/Blackboard/BlackboardKeyType_Object.h"
 #include "BehaviorTree/Blackboard/BlackboardKeyType_Vector.h"
 #include "BehaviorTree/BlackboardComponent.h"
-#include "Core/CoopArenaGameState.h"
-#include "Enemy/CoopArenaEnemyCharacter.h"
+#include "Character/CoopArenaEnemyCharacter.h"
 #include "Engine/OverlapResult.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameModes/CoopArenaGameState.h"
 
 #if ENABLE_DRAW_DEBUG
 static TAutoConsoleVariable CVarDebugApproach(TEXT("CoopArena.DebugApproach"), false, TEXT("Draws where each enemy runs"));
 #endif
 
-UBTService_CoopArenaApproach::UBTService_CoopArenaApproach() {
+UCoopArenaBTService_Approach::UCoopArenaBTService_Approach() {
 	NodeName = "Approach";
 	Interval = 0.25f;
 
-	TargetActorKey.AddObjectFilter(this, GET_MEMBER_NAME_CHECKED(UBTService_CoopArenaApproach, TargetActorKey), AActor::StaticClass());
-	ApproachLocationKey.AddVectorFilter(this, GET_MEMBER_NAME_CHECKED(UBTService_CoopArenaApproach, ApproachLocationKey));
-	ArrivedKey.AddBoolFilter(this, GET_MEMBER_NAME_CHECKED(UBTService_CoopArenaApproach, ArrivedKey));
+	TargetActorKey.AddObjectFilter(this, GET_MEMBER_NAME_CHECKED(UCoopArenaBTService_Approach, TargetActorKey), AActor::StaticClass());
+	ApproachLocationKey.AddVectorFilter(this, GET_MEMBER_NAME_CHECKED(UCoopArenaBTService_Approach, ApproachLocationKey));
+	ArrivedKey.AddBoolFilter(this, GET_MEMBER_NAME_CHECKED(UCoopArenaBTService_Approach, ArrivedKey));
 }
 
-void UBTService_CoopArenaApproach::InitializeFromAsset(UBehaviorTree& Asset) {
+void UCoopArenaBTService_Approach::InitializeFromAsset(UBehaviorTree& Asset) {
 	Super::InitializeFromAsset(Asset);
 
 	if (const auto BlackboardPtr = GetBlackboardAsset()) {
@@ -33,11 +33,11 @@ void UBTService_CoopArenaApproach::InitializeFromAsset(UBehaviorTree& Asset) {
 	}
 }
 
-void UBTService_CoopArenaApproach::InitializeMemory(UBehaviorTreeComponent&, uint8* NodeMemory, const EBTMemoryInit::Type InitType) const {
+void UCoopArenaBTService_Approach::InitializeMemory(UBehaviorTreeComponent&, uint8* NodeMemory, const EBTMemoryInit::Type InitType) const {
 	InitializeNodeMemory<FMemory>(NodeMemory, InitType);
 }
 
-void UBTService_CoopArenaApproach::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, const float DeltaSeconds) {
+void UCoopArenaBTService_Approach::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, const float DeltaSeconds) {
 	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
 
 	const auto BlackboardPtr = OwnerComp.GetBlackboardComponent();
@@ -93,7 +93,7 @@ void UBTService_CoopArenaApproach::TickNode(UBehaviorTreeComponent& OwnerComp, u
 #endif
 }
 
-bool UBTService_CoopArenaApproach::HandleOffNavmesh(const UNavigationSystemV1* NavSystem, ACoopArenaEnemyCharacter& Enemy, FMemory& Memory) {
+bool UCoopArenaBTService_Approach::HandleOffNavmesh(const UNavigationSystemV1* NavSystem, ACoopArenaEnemyCharacter& Enemy, FMemory& Memory) {
 	const auto EnemyPos = Enemy.GetActorLocation();
 	FNavLocation OnNavmesh;
 	if (NavSystem && Enemy.GetCharacterMovement()->IsMovingOnGround() && !NavSystem->ProjectPointToNavigation(EnemyPos, OnNavmesh)) {
@@ -116,7 +116,7 @@ bool UBTService_CoopArenaApproach::HandleOffNavmesh(const UNavigationSystemV1* N
 	return true;
 }
 
-TOptional<FVector> UBTService_CoopArenaApproach::ChasePoint(const UNavigationSystemV1* NavSystem, ACoopArenaEnemyCharacter& Enemy, const AActor& Player, FMemory& Memory) const {
+TOptional<FVector> UCoopArenaBTService_Approach::ChasePoint(const UNavigationSystemV1* NavSystem, ACoopArenaEnemyCharacter& Enemy, const AActor& Player, FMemory& Memory) const {
 	auto Velocity = FVector2D(Player.GetVelocity());
 	const auto Role = Enemy.GetChaseRole();
 	if (!NavSystem || Role == ECoopArenaEnemyChaseRole::Tail || Velocity.IsNearlyZero()) {
@@ -174,7 +174,7 @@ TOptional<FVector> UBTService_CoopArenaApproach::ChasePoint(const UNavigationSys
 	return {};
 }
 
-bool UBTService_CoopArenaApproach::IsArrived(ACoopArenaEnemyCharacter& Enemy, const AActor& Player, FMemory& Memory, const float DeltaSeconds) const {
+bool UCoopArenaBTService_Approach::IsArrived(ACoopArenaEnemyCharacter& Enemy, const AActor& Player, FMemory& Memory, const float DeltaSeconds) const {
 	if (!Player.GetVelocity().IsNearlyZero() || !Enemy.GetCharacterMovement()->IsMovingOnGround()) {
 		Enemy.SetArrivedToStandingPlayer(false);
 		Memory.StalledFor = 0.0f;

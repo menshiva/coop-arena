@@ -1,7 +1,7 @@
 #include "CoopArenaProjectileManager.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
-#include "CoopArenaProjectileMovement.h"
+#include "CoopArenaProjectileMovementComponent.h"
 #include "Components/InstancedStaticMeshComponent.h"
 
 ACoopArenaProjectileManager::ACoopArenaProjectileManager() {
@@ -51,7 +51,7 @@ void ACoopArenaProjectileManager::Launch(
 		MeshPtr->RegisterComponent();
 		MeshPtr->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepWorldTransform);
 
-		const auto MovementPtr = NewObject<UCoopArenaProjectileMovement>(this, MovementComponentClass);
+		const auto MovementPtr = NewObject<UCoopArenaProjectileMovementComponent>(this, MovementComponentClass);
 		MovementPtr->Init(this, BallSlots.Num());
 		MovementPtr->RegisterComponent();
 

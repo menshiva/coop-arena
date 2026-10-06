@@ -4,7 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "CoopArenaProjectileManager.generated.h"
 
-class UCoopArenaProjectileMovement;
+class UCoopArenaProjectileMovementComponent;
 class UInstancedStaticMeshComponent;
 
 USTRUCT()
@@ -15,7 +15,7 @@ struct FCoopArenaBallSlot {
 	TObjectPtr<UStaticMeshComponent> Mesh;
 
 	UPROPERTY()
-	TObjectPtr<UCoopArenaProjectileMovement> Movement;
+	TObjectPtr<UCoopArenaProjectileMovementComponent> Movement;
 
 	FGameplayEffectSpecHandle DamageSpec;
 };
@@ -40,7 +40,7 @@ protected:
 	TSubclassOf<UStaticMeshComponent> BallComponentClass;
 
 	UPROPERTY(EditDefaultsOnly, Category="Ball")
-	TSubclassOf<UCoopArenaProjectileMovement> MovementComponentClass;
+	TSubclassOf<UCoopArenaProjectileMovementComponent> MovementComponentClass;
 
 	UPROPERTY(EditInstanceOnly, Category="Ball", meta=(ClampMin=1))
 	int32 BallsLimit = 500;

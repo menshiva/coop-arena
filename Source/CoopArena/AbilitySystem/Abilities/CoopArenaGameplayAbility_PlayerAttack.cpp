@@ -1,15 +1,15 @@
-#include "CoopArenaGameplayAbility_Attack.h"
+#include "CoopArenaGameplayAbility_PlayerAttack.h"
 #include "CoopArenaGameplayTags.h"
 #include "EngineUtils.h"
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
-#include "Weapons/CoopArenaProjectileManager.h"
+#include "Projectiles/CoopArenaProjectileManager.h"
 
-UCoopArenaGameplayAbility_Attack::UCoopArenaGameplayAbility_Attack() {
+UCoopArenaGameplayAbility_PlayerAttack::UCoopArenaGameplayAbility_PlayerAttack() {
 	SetAssetTags(FGameplayTagContainer(CoopArena_Ability_Attack_Player_Basic));
 }
 
-int32 UCoopArenaGameplayAbility_Attack::GetDamage(const FGameplayEffectContextHandle& Context) const {
+int32 UCoopArenaGameplayAbility_PlayerAttack::GetDamage(const FGameplayEffectContextHandle& Context) const {
 	// by flight distance, from the launch point to the impact
 	const auto HitPtr = Context.GetHitResult();
 	if (!HitPtr)
@@ -21,7 +21,7 @@ int32 UCoopArenaGameplayAbility_Attack::GetDamage(const FGameplayEffectContextHa
 	));
 }
 
-void UCoopArenaGameplayAbility_Attack::OnAttackEvent(FGameplayEventData) {
+void UCoopArenaGameplayAbility_PlayerAttack::OnAttackEvent(FGameplayEventData) {
 	const auto CharacterPtr = Cast<ACharacter>(GetAvatarActorFromActorInfo());
 	if (!CharacterPtr || !CharacterPtr->GetController())
 		return;

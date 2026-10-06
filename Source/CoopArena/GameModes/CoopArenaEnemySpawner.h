@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CoopArenaEnemyCharacter.h"
+#include "Character/CoopArenaEnemyCharacter.h"
 #include "GameFramework/Actor.h"
 #include "CoopArenaEnemySpawner.generated.h"
 

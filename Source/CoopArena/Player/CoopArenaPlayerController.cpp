@@ -1,11 +1,11 @@
 #include "CoopArenaPlayerController.h"
 #include "AbilitySystemGlobals.h"
 #include "EnhancedInputSubsystems.h"
-#include "AbilitySystem/CoopArenaAttributeSet.h"
+#include "AbilitySystem/Attributes/CoopArenaAttributeSet.h"
 #include "GameFramework/GameModeBase.h"
 #include "GameFramework/PlayerState.h"
 #include "UI/CoopArenaHealthWidget.h"
-#include "UI/CoopArenaHudWidget.h"
+#include "UI/CoopArenaHUDWidget.h"
 
 bool ACoopArenaPlayerController::InputKey(const FInputKeyEventArgs& Params) {
 	static constexpr float GamepadDeadZone = 0.25f;
@@ -29,7 +29,7 @@ void ACoopArenaPlayerController::BeginPlay() {
 		bUsingGamepad = FSlateApplication::IsInitialized() && FSlateApplication::Get().IsGamepadAttached();
 
 		if (HudWidgetClass)
-			Hud = CreateWidget<UCoopArenaHudWidget>(this, HudWidgetClass);
+			Hud = CreateWidget<UCoopArenaHUDWidget>(this, HudWidgetClass);
 		if (Hud)
 			Hud->AddToViewport();
 

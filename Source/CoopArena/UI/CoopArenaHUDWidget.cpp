@@ -1,14 +1,15 @@
-#include "CoopArenaHudWidget.h"
+#include "CoopArenaHUDWidget.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
 #include "Components/CanvasPanelSlot.h"
 
-void UCoopArenaHudWidget::NativeTick(const FGeometry& MyGeometry, const float InDeltaTime) {
+void UCoopArenaHUDWidget::NativeTick(const FGeometry& MyGeometry, const float InDeltaTime) {
 	Super::NativeTick(MyGeometry, InDeltaTime);
 
 	if (PlayerAnchor) {
-		FVector2D Center;
 		const auto PawnPtr = GetOwningPlayerPawn();
 		const auto SlotPtr = Cast<UCanvasPanelSlot>(PlayerAnchor->Slot);
+
+		FVector2D Center;
 		const bool bOnScreen = PawnPtr && SlotPtr && UWidgetLayoutLibrary::ProjectWorldLocationToWidgetPosition(
 			GetOwningPlayer(), PawnPtr->GetActorLocation(), Center, false
 		);

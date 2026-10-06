@@ -2,8 +2,8 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "CoopArenaGameplayTags.h"
-#include "Core/CoopArenaPlayerController.h"
 #include "GameFramework/PlayerState.h"
+#include "Player/CoopArenaPlayerController.h"
 
 void UCoopArenaControlHintWidget::NativeOnInitialized() {
 	Super::NativeOnInitialized();

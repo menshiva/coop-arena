@@ -13,6 +13,8 @@ ACoopArenaEnemySpawner::ACoopArenaEnemySpawner() {
 void ACoopArenaEnemySpawner::BeginPlay() {
 	Super::BeginPlay();
 
+	FParse::Value(FCommandLine::Get(), TEXT("BenchEnemies="), EnemyNum);
+
 	for (int32 i = 0; i < EnemyNum; ++i)
 		SpawnEnemy();
 }

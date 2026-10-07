@@ -75,4 +75,6 @@ private:
 	void OnDeath(AActor* Killer);
 
 	TWeakObjectPtr<UAbilitySystemComponent> AbilitySystem;
+
+	friend class UCoopArenaBenchComponent;
 };

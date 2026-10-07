@@ -9,6 +9,7 @@
 #include "GameModes/CoopArenaEnemySpawner.h"
 #include "GameModes/CoopArenaGameState.h"
 #include "Kismet/GameplayStatics.h"
+#include "Projectiles/CoopArenaProjectileManager.h"
 #include "UI/CoopArenaHealthWidget.h"
 
 ACoopArenaEnemyCharacter::ACoopArenaEnemyCharacter() {
@@ -53,6 +54,10 @@ void ACoopArenaEnemyCharacter::BeginPlay() {
 	Attributes->SetMaxHealth(Stats.MaxHealth);
 	Attributes->SetHealth(Stats.MaxHealth);
 	Attributes->OnDeath.AddUObject(this, &ACoopArenaEnemyCharacter::OnDeath);
+
+	// flying balls don't block our movement
+	if (const TActorIterator<ACoopArenaProjectileManager> It(GetWorld()); It)
+		MoveIgnoreActorAdd(*It);
 }
 
 void ACoopArenaEnemyCharacter::Tick(const float DeltaSeconds) {

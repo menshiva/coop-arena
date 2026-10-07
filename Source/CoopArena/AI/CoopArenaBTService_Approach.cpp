@@ -101,11 +101,8 @@ bool UCoopArenaBTService_Approach::HandleOffNavmesh(const UNavigationSystemV1* N
 			return false;
 		Memory.OffNavmeshTicks = 0;
 		if (NavSystem->ProjectPointToNavigation(EnemyPos, OnNavmesh, FVector(500.0))) {
-			// nudge back to the closest point
-			Enemy.SetActorLocation(
-				OnNavmesh.Location + FVector(0.0, 0.0, Enemy.GetSimpleCollisionHalfHeight()), false,
-				nullptr, ETeleportType::TeleportPhysics
-			);
+			// nudge back to the closest free point (retry next time if occupied)
+			Enemy.TeleportTo(OnNavmesh.Location + FVector(0.0, 0.0, Enemy.GetSimpleCollisionHalfHeight()), Enemy.GetActorRotation());
 		}
 		else {
 			Enemy.Destroy();

@@ -1,4 +1,5 @@
 #include "CoopArenaGameplayAbility_PlayerAttack.h"
+#include "CoopArena.h"
 #include "CoopArenaGameplayTags.h"
 #include "EngineUtils.h"
 #include "GameFramework/Character.h"
@@ -44,7 +45,7 @@ void UCoopArenaGameplayAbility_PlayerAttack::OnAttackEvent(FGameplayEventData) {
 
 	FHitResult Hit;
 	const FCollisionQueryParams Params(SCENE_QUERY_STAT(CoopArenaAttackAim), false, CharacterPtr);
-	const auto AimPoint = WorldPtr->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, ECC_Visibility, Params)
+	const auto AimPoint = WorldPtr->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, CoopArena_TraceChannel_Weapon, Params)
 		? Hit.ImpactPoint
 		: TraceEnd;
 

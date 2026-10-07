@@ -1,4 +1,5 @@
 #include "CoopArenaPlayerCharacter.h"
+#include "EngineUtils.h"
 #include "EnhancedInputComponent.h"
 #include "AbilitySystem/Abilities/CoopArenaGameplayAbility.h"
 #include "AbilitySystem/Attributes/CoopArenaAttributeSet.h"
@@ -6,6 +7,7 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Player/CoopArenaPlayerState.h"
+#include "Projectiles/CoopArenaProjectileManager.h"
 
 ACoopArenaPlayerCharacter::ACoopArenaPlayerCharacter() {
 	GetCapsuleComponent()->InitCapsuleSize(32.0f, 90.0f);
@@ -28,6 +30,14 @@ ACoopArenaPlayerCharacter::ACoopArenaPlayerCharacter() {
 	// Create a follow camera
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
+}
+
+void ACoopArenaPlayerCharacter::BeginPlay() {
+	Super::BeginPlay();
+
+	// flying balls don't block our movement
+	if (const TActorIterator<ACoopArenaProjectileManager> It(GetWorld()); It)
+		MoveIgnoreActorAdd(*It);
 }
 
 void ACoopArenaPlayerCharacter::PossessedBy(AController* NewController) {

@@ -4,3 +4,5 @@
 
 /** Main log category used across the project */
 DECLARE_LOG_CATEGORY_EXTERN(LogCoopArena, Log, All);
+
+#define CoopArena_TraceChannel_Weapon ECC_GameTraceChannel2

@@ -13,34 +13,8 @@ ACoopArenaEnemySpawner::ACoopArenaEnemySpawner() {
 void ACoopArenaEnemySpawner::BeginPlay() {
 	Super::BeginPlay();
 
-	FParse::Value(FCommandLine::Get(), TEXT("BenchEnemies="), EnemyNum);
-
 	for (int32 i = 0; i < EnemyNum; ++i)
 		SpawnEnemy();
-}
-
-void ACoopArenaEnemySpawner::SpawnEnemy() {
-	if (!EnemyClass)
-		return;
-
-	const auto WorldPtr = GetWorld();
-	const auto NavSystemPtr = UNavigationSystemV1::GetCurrent(WorldPtr);
-	if (!NavSystemPtr)
-		return;
-
-	FNavLocation Point;
-	if (!NavSystemPtr->GetRandomPoint(Point))
-		return;
-
-	// deferred: the stats must be on the enemy before its BeginPlay
-	const FTransform Transform(Point.Location + FVector(0.0, 0.0, FMath::RandRange(FallHeightRange.Min, FallHeightRange.Max)));
-	const auto EnemyPtr = WorldPtr->SpawnActorDeferred<ACoopArenaEnemyCharacter>(EnemyClass, Transform);
-	if (!EnemyPtr)
-		return;
-
-	EnemyPtr->SetStats(GetEnemyNewRolledStats());
-	EnemyPtr->FinishSpawning(Transform);
-	EnemyPtr->OnDestroyed.AddDynamic(this, &ACoopArenaEnemySpawner::OnEnemyDestroyed);
 }
 
 FCoopArenaEnemyStats ACoopArenaEnemySpawner::GetEnemyNewRolledStats() const {
@@ -69,6 +43,30 @@ FCoopArenaEnemyStats ACoopArenaEnemySpawner::GetEnemyNewRolledStats() const {
 
 	Stats.SpeedFactor = FMath::RandRange(SpeedFactorRange.Min, SpeedFactorRange.Max);
 	return Stats;
+}
+
+void ACoopArenaEnemySpawner::SpawnEnemy() {
+	if (!EnemyClass)
+		return;
+
+	const auto WorldPtr = GetWorld();
+	const auto NavSystemPtr = UNavigationSystemV1::GetCurrent(WorldPtr);
+	if (!NavSystemPtr)
+		return;
+
+	FNavLocation Point;
+	if (!NavSystemPtr->GetRandomPoint(Point))
+		return;
+
+	// deferred: the stats must be on the enemy before its BeginPlay
+	const FTransform Transform(Point.Location + FVector(0.0, 0.0, FMath::RandRange(FallHeightRange.Min, FallHeightRange.Max)));
+	const auto EnemyPtr = WorldPtr->SpawnActorDeferred<ACoopArenaEnemyCharacter>(EnemyClass, Transform);
+	if (!EnemyPtr)
+		return;
+
+	EnemyPtr->SetStats(GetEnemyNewRolledStats());
+	EnemyPtr->FinishSpawning(Transform);
+	EnemyPtr->OnDestroyed.AddDynamic(this, &ACoopArenaEnemySpawner::OnEnemyDestroyed);
 }
 
 void ACoopArenaEnemySpawner::OnEnemyDestroyed(AActor*) {

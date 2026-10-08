@@ -9,7 +9,7 @@ void UCoopArenaHUDWidget::NativeTick(const FGeometry& MyGeometry, const float In
 		const auto PawnPtr = GetOwningPlayerPawn();
 		const auto SlotPtr = Cast<UCanvasPanelSlot>(PlayerAnchor->Slot);
 
-		FVector2D Center;
+		FVector2D Center = FVector2D::ZeroVector;
 		const bool bOnScreen = PawnPtr && SlotPtr && UWidgetLayoutLibrary::ProjectWorldLocationToWidgetPosition(
 			GetOwningPlayer(), PawnPtr->GetActorLocation(), Center, false
 		);

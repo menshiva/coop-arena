@@ -12,8 +12,11 @@ public:
 protected:
 	virtual void BeginPlay() override;
 public:
-	void SpawnEnemy();
+	FORCEINLINE void SetEnemyNum(const int32 InEnemyNum) { EnemyNum = InEnemyNum; }
+
 	FCoopArenaEnemyStats GetEnemyNewRolledStats() const;
+
+	void SpawnEnemy();
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="Spawn")
 	TSubclassOf<ACoopArenaEnemyCharacter> EnemyClass;

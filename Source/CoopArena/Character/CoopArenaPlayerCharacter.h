@@ -76,5 +76,5 @@ private:
 
 	TWeakObjectPtr<UAbilitySystemComponent> AbilitySystem;
 
-	friend class UCoopArenaBenchComponent;
+	friend class UCoopArenaBenchSubsystem;
 };

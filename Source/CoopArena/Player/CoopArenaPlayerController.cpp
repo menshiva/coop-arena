@@ -2,7 +2,6 @@
 #include "AbilitySystemGlobals.h"
 #include "EnhancedInputSubsystems.h"
 #include "AbilitySystem/Attributes/CoopArenaAttributeSet.h"
-#include "Benchmark/CoopArenaBenchComponent.h"
 #include "GameFramework/GameModeBase.h"
 #include "GameFramework/PlayerState.h"
 #include "UI/CoopArenaHealthWidget.h"
@@ -41,9 +40,6 @@ void ACoopArenaPlayerController::BeginPlay() {
 			AbilitySystemPtr->GetGameplayAttributeValueChangeDelegate(UCoopArenaAttributeSet::GetHealthAttribute()).AddUObject(this, &ACoopArenaPlayerController::OnHealthChanged);
 			OnHealthChanged(FOnAttributeChangeData()); // PossessedBy may have applied the stats already
 		}
-
-		if (FParse::Param(FCommandLine::Get(), TEXT("bench")))
-			NewObject<UCoopArenaBenchComponent>(this)->RegisterComponent();
 	}
 }
 

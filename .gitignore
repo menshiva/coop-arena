@@ -17,6 +17,9 @@
 
 !/README.md
 
+# Do not ignore the VC++ runtime staged to the game exe.
+!/Build/Windows/AppLocalDependencies/**
+
 # Only allow .uasset and .umap files from /Content dir.
 !/Content/**/*.uasset
 !/Content/**/*.umap

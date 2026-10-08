@@ -1,44 +1,84 @@
-#include "CoopArenaBenchComponent.h"
+#include "CoopArenaBenchSubsystem.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "CoopArenaGameplayTags.h"
 #include "EngineUtils.h"
 #include "EnhancedInputSubsystems.h"
-#include "Character/CoopArenaEnemyCharacter.h"
 #include "Character/CoopArenaPlayerCharacter.h"
 #include "GameFramework/PlayerState.h"
+#include "GameModes/CoopArenaEnemySpawner.h"
+#include "Performance/EnginePerformanceTargets.h"
+#include "Projectiles/CoopArenaProjectileManager.h"
+THIRD_PARTY_INCLUDES_START
+#include <dxgi1_4.h>
+THIRD_PARTY_INCLUDES_END
 
-static constexpr double WarmupSeconds = 10.0; // shader compiles and streaming settle, not recorded
+static constexpr double WarmupSeconds = 10.0; // shader compiles and streaming settle, out of the frame stats
 static constexpr double MeasureSeconds = 60.0;
 static constexpr double RingRadius = 1100.0; // clear of the center platform and inner ramps, short of the outer blocks
 static constexpr double RingSteerDistance = 200.0; // this far off the ring the bot heads straight back
+static constexpr double BallsScatterRadius = 1600.0; // -BenchBalls: around the arena center, short of the outer columns at 16.5 m
 static constexpr double TurnRate = 360.0; // degrees per second, a player's pace
 static constexpr uint64 AttackPeriodFrames = 2; // a frame down, a frame up: Started needs the action back at None in between
 static constexpr double ManeuverPeriodSeconds = 2.5; // a jump once a period, a dash after each
 static constexpr double AirDashDelaySeconds = 0.25; // after the jump: near the apex, the jump is 0.68 s in the air
 static constexpr double GroundDashDelaySeconds = 1.25; // after the jump: landed
 static constexpr double SlowFrameMs = 1000.0 / 30.0;
+static constexpr double BytesPerMiB = 1024.0 * 1024.0;
 
-UCoopArenaBenchComponent::UCoopArenaBenchComponent() {
-	PrimaryComponentTick.bCanEverTick = true;
+// the process's video memory, as the Task Manager shows it (RHIGetMemoryStats isn't refreshed in Shipping)
+static uint64 GetVideoMemoryUsage() {
+	TRefCountPtr<IDXGIFactory1> Factory;
+	if (FAILED(CreateDXGIFactory1(IID_PPV_ARGS(Factory.GetInitReference()))))
+		return 0;
+
+	// the adapter the RHI renders on
+	TRefCountPtr<IDXGIAdapter1> Adapter;
+	for (uint32 i = 0; Factory->EnumAdapters1(i, Adapter.GetInitReference()) == S_OK; ++i) {
+		DXGI_ADAPTER_DESC1 Desc;
+		TRefCountPtr<IDXGIAdapter3> Adapter3;
+		DXGI_QUERY_VIDEO_MEMORY_INFO Info;
+		if (SUCCEEDED(Adapter->GetDesc1(&Desc)) && Desc.VendorId == GRHIVendorId && Desc.DeviceId == GRHIDeviceId
+			&& SUCCEEDED(Adapter->QueryInterface(IID_PPV_ARGS(Adapter3.GetInitReference())))
+			&& SUCCEEDED(Adapter3->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &Info)))
+			return Info.CurrentUsage;
+	}
+
+	return 0;
 }
 
-void UCoopArenaBenchComponent::BeginPlay() {
-	Super::BeginPlay();
-
-	// after the controller
-	AddTickPrerequisiteActor(GetOwner());
-
-	// GE_Damage skips targets with this tag
-	if (const auto AbilitySystemPtr = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner<APlayerController>()->PlayerState))
-		AbilitySystemPtr->AddLooseGameplayTag(CoopArena_Status_Invulnerable);
-
-	StartTime = FPlatformTime::Seconds();
-	LastFrameTime = StartTime;
+bool UCoopArenaBenchSubsystem::ShouldCreateSubsystem(UObject* Outer) const {
+	return FParse::Param(FCommandLine::Get(), TEXT("bench")) && Super::ShouldCreateSubsystem(Outer);
 }
 
-void UCoopArenaBenchComponent::TickComponent(const float DeltaTime, const ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+void UCoopArenaBenchSubsystem::OnWorldBeginPlay(UWorld& InWorld) {
+	Super::OnWorldBeginPlay(InWorld);
+
+	{
+		// set enemy number to spawn
+		int32 EnemyNum = 0;
+		const TActorIterator<ACoopArenaEnemySpawner> SpawnerIt(&InWorld);
+		if (SpawnerIt && FParse::Value(FCommandLine::Get(), TEXT("BenchEnemies="), EnemyNum))
+			SpawnerIt->SetEnemyNum(EnemyNum);
+	}
+
+	{
+		// make player invulnerable to the enemies
+		const auto ControllerPtr = InWorld.GetFirstPlayerController();
+		if (const auto AbilitySystemPtr = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(ControllerPtr ? ControllerPtr->PlayerState.Get() : nullptr))
+			AbilitySystemPtr->AddLooseGameplayTag(CoopArena_Status_Invulnerable);
+	}
+}
+
+void UCoopArenaBenchSubsystem::Tick(const float DeltaTime) {
+	Super::Tick(DeltaTime);
+
+	if (StartTime == 0.0) {
+		// the first frame of play: loading (since the process start) is over, the balls go down, the clock starts
+		ScatterBalls();
+		StartTime = FPlatformTime::Seconds();
+		LastFrameTime = StartTime;
+	}
 
 	const double Now = FPlatformTime::Seconds();
 	const double Elapsed = Now - StartTime;
@@ -61,23 +101,59 @@ void UCoopArenaBenchComponent::TickComponent(const float DeltaTime, const ELevel
 		return;
 	}
 
+	const double FrameMs = (Now - LastFrameTime) * 1000.0;
 	if (Elapsed >= WarmupSeconds) {
 		if (FrameTimesMs.IsEmpty()) {
 			// -csvStartOnEvent=BenchStart starts the capture here
 			CSV_EVENT_GLOBAL(TEXT("BenchStart"));
 		}
-		FrameTimesMs.Push((Now - LastFrameTime) * 1000.0);
+		FrameTimesMs.Push(FrameMs);
+	}
+	else {
+		// warmup: only its worst frame and hitches go to the file
+		WarmupMaxMs = FMath::Max(WarmupMaxMs, FrameMs);
+		if (FrameMs >= FEnginePerformanceTargets::GetHitchFrameTimeThresholdMS())
+			++WarmupHitches;
 	}
 	LastFrameTime = Now;
 
 	Drive(PrevElapsed, Elapsed);
 }
 
-void UCoopArenaBenchComponent::Drive(const double PrevElapsed, const double Elapsed) {
-	const auto ControllerPtr = GetOwner<APlayerController>();
-	const auto CharacterPtr = ControllerPtr->GetPawn<ACoopArenaPlayerCharacter>();
-	const auto InputPtr = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(ControllerPtr->GetLocalPlayer());
-	if (!CharacterPtr || !InputPtr)
+void UCoopArenaBenchSubsystem::ScatterBalls() const {
+	// spawn balls scattered over the arena floor
+
+	const TActorIterator<ACoopArenaProjectileManager> ManagerIt(GetWorld());
+	if (!ManagerIt)
+		return;
+
+	int32 BallNum = 0;
+	FParse::Value(FCommandLine::Get(), TEXT("BenchBalls="), BallNum);
+	if (BallNum <= 0)
+		return;
+
+	const double Lift = ManagerIt->GetProjectileRadius();
+	if (Lift <= 0.0)
+		return;
+
+	const FRandomStream Random(0);
+	TArray<FTransform> Transforms;
+	Transforms.Reserve(BallNum);
+	for (int32 i = 0; i < BallNum; ++i) {
+		// uniform over the disk, then straight down onto the floor, a ramp or the center platform
+		const auto Point = FVector2D(BallsScatterRadius * FMath::Sqrt(Random.FRand()), 0.0).GetRotated(Random.FRandRange(0.0, 360.0));
+		FHitResult Hit;
+		if (GetWorld()->LineTraceSingleByObjectType(Hit, FVector(Point, 1000.0), FVector(Point, -1000.0), ECC_WorldStatic))
+			Transforms.Push(FTransform(Hit.Location + FVector(0.0, 0.0, Lift)));
+	}
+	ManagerIt->AddRestingBalls(Transforms);
+}
+
+void UCoopArenaBenchSubsystem::Drive(const double PrevElapsed, const double Elapsed) {
+	const auto ControllerPtr = GetWorld()->GetFirstPlayerController();
+	const auto CharacterPtr = ControllerPtr ? ControllerPtr->GetPawn<ACoopArenaPlayerCharacter>() : nullptr;
+	const auto InputPtr = CharacterPtr ? ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(ControllerPtr->GetLocalPlayer()) : nullptr;
+	if (!InputPtr)
 		return;
 
 	const auto Location = CharacterPtr->GetActorLocation();
@@ -118,7 +194,7 @@ void UCoopArenaBenchComponent::Drive(const double PrevElapsed, const double Elap
 	}
 
 	{
-		// buttons: balls nonstop; a jump once a period, a dash after it, in the air and on the ground in turn
+		// actions: balls nonstop; a jump once a period, a dash after it, in the air and on the ground in turn
 		const auto Beat = [PrevElapsed, Elapsed] (const double Period, const double Offset) {
 			// a beat every Period seconds, shifted by Offset, falls on this frame
 			return FMath::FloorToInt64((Elapsed - Offset) / Period) != FMath::FloorToInt64((PrevElapsed - Offset) / Period);
@@ -135,7 +211,7 @@ void UCoopArenaBenchComponent::Drive(const double PrevElapsed, const double Elap
 	}
 }
 
-void UCoopArenaBenchComponent::WriteResults() const {
+void UCoopArenaBenchSubsystem::WriteResults() const {
 	auto Sorted = FrameTimesMs;
 	Sorted.Sort();
 	const auto Percentile = [&Sorted] (const double Fraction) {
@@ -150,15 +226,22 @@ void UCoopArenaBenchComponent::WriteResults() const {
 			++SlowFrames;
 	}
 
+	// memory at the end of the run: RAM (working set), video memory of the process and of all textures, render targets included
+	const auto Memory = FPlatformMemory::GetStats();
+	FTextureMemoryStats TextureMemory;
+	RHIGetTextureMemoryStats(TextureMemory);
+
 	const auto Path = FPaths::ProfilingDir() / TEXT("Bench.csv");
 	FString Text;
 	if (!IFileManager::Get().FileExists(*Path))
-		Text = TEXT("Time,Config,ShaderPlatform,Resolution,Frames,AvgMs,P50Ms,P95Ms,P99Ms,MaxMs,SlowFrames,CommandLine\n");
+		Text = TEXT("Time,Config,ShaderPlatform,Resolution,Frames,AvgMs,P50Ms,P95Ms,P99Ms,MaxMs,SlowFrames,LoadSec,WarmupMaxMs,WarmupHitches,RamMiB,RamPeakMiB,VramMiB,TexturesMiB,CommandLine\n");
 	Text += FString::Printf(
-		TEXT("%s,%s,%s,%dx%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%d,\"%s\"\n"),
+		TEXT("%s,%s,%s,%dx%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%.2f,%.2f,%d,%.1f,%.1f,%.1f,%.1f,\"%s\"\n"),
 		*FDateTime::Now().ToString(), LexToString(FApp::GetBuildConfiguration()), *FDataDrivenShaderPlatformInfo::GetName(GMaxRHIShaderPlatform).ToString(),
 		GSystemResolution.ResX, GSystemResolution.ResY, Sorted.Num(),
 		TotalMs / Sorted.Num(), Percentile(0.5), Percentile(0.95), Percentile(0.99), Sorted.Last(), SlowFrames,
+		StartTime - GStartTime, WarmupMaxMs, WarmupHitches,
+		Memory.UsedPhysical / BytesPerMiB, Memory.PeakUsedPhysical / BytesPerMiB, GetVideoMemoryUsage() / BytesPerMiB, (TextureMemory.StreamingMemorySize + TextureMemory.NonStreamingMemorySize) / BytesPerMiB,
 		*FString(FCommandLine::Get()).Replace(TEXT("\""), TEXT("\"\""))
 	);
 	FFileHelper::SaveStringToFile(Text, *Path, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM, &IFileManager::Get(), FILEWRITE_Append);

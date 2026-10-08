@@ -33,6 +33,9 @@ public:
 		AActor* ActorToIgnore
 	);
 
+	double GetProjectileRadius() const;
+	void AddRestingBalls(TArrayView<const FTransform> Transforms);
+
 	void OnBallImpact(int32 SlotIndex, const FHitResult& Hit);
 	void OnBallStopped(int32 SlotIndex, bool bCreateIsmCopy);
 protected:

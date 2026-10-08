@@ -78,6 +78,23 @@ void ACoopArenaProjectileManager::Launch(
 	}
 }
 
+double ACoopArenaProjectileManager::GetProjectileRadius() const {
+	return BallsIsm && BallsIsm->GetStaticMesh() ? BallsIsm->GetStaticMesh()->GetBounds().SphereRadius : 0.0;
+}
+
+void ACoopArenaProjectileManager::AddRestingBalls(const TArrayView<const FTransform> Transforms) {
+	for (const auto& Transform : Transforms) {
+		if (BallsIsm->GetInstanceCount() < BallsLimit) {
+			BallsIsm->AddInstance(Transform, true);
+		}
+		else {
+			// past the limit it overwrites the oldest
+			BallsIsm->UpdateInstanceTransform(NextIsmIndex, Transform, true, true);
+			NextIsmIndex = (NextIsmIndex + 1) % BallsLimit;
+		}
+	}
+}
+
 void ACoopArenaProjectileManager::OnBallImpact(const int32 SlotIndex, const FHitResult& Hit) {
 	if (!BallSlots.IsValidIndex(SlotIndex) || BallSlotFreeIndices.Contains(SlotIndex))
 		return;
@@ -108,15 +125,7 @@ void ACoopArenaProjectileManager::OnBallStopped(const int32 SlotIndex, const boo
 
 	if (bCreateIsmCopy) {
 		// leave a resting ism copy
-		const auto& Transform = Slot.Mesh->GetComponentTransform();
-		if (BallsIsm->GetInstanceCount() < BallsLimit) {
-			BallsIsm->AddInstance(Transform, true);
-		}
-		else {
-			// past the limit it overwrites the oldest
-			BallsIsm->UpdateInstanceTransform(NextIsmIndex, Transform, true, true);
-			NextIsmIndex = (NextIsmIndex + 1) % BallsLimit;
-		}
+		AddRestingBalls(TArrayView(&Slot.Mesh->GetComponentTransform(), 1));
 	}
 
 	{

@@ -24,5 +24,8 @@ public class CoopArena : ModuleRules
 		});
 
 		PublicIncludePaths.Add(ModuleDirectory);
+
+		// the bench reads the process's video memory from DXGI
+		PublicSystemLibraries.Add("dxgi.lib");
 	}
 }

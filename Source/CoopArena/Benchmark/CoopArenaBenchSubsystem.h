@@ -6,7 +6,7 @@
 // benchmark, exists only with -bench
 // a bot runs the ring around the arena center throwing balls nonstop, jumping and dashing now and then
 // -BenchEnemies=N sets the enemy count, with -BenchBalls=N the arena starts with N balls already at rest
-// appends frame time, load and memory stats to Saved/Profiling/Bench.csv and quits
+// appends frame, thread and GPU times, load and memory stats to Saved/Profiling/Bench.csv and quits
 UCLASS()
 class UCoopArenaBenchSubsystem : public UTickableWorldSubsystem {
 	GENERATED_BODY()
@@ -29,5 +29,8 @@ private:
 	int32 WarmupHitches = 0;
 
 	TArray<double> FrameTimesMs;
+	double GameThreadTotalMs = 0.0; // the engine's thread and GPU times summed over the measured frames
+	double RenderThreadTotalMs = 0.0;
+	double GPUTotalMs = 0.0;
 	TWeakObjectPtr<AActor> Target;
 };

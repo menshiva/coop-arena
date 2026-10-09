@@ -108,6 +108,10 @@ void UCoopArenaBenchSubsystem::Tick(const float DeltaTime) {
 			CSV_EVENT_GLOBAL(TEXT("BenchStart"));
 		}
 		FrameTimesMs.Push(FrameMs);
+		// the engine's own thread and GPU times, as stat unit shows them: a frame or two behind, fine for the averages
+		GameThreadTotalMs += FPlatformTime::ToMilliseconds(GGameThreadTime);
+		RenderThreadTotalMs += FPlatformTime::ToMilliseconds(GRenderThreadTime);
+		GPUTotalMs += FPlatformTime::ToMilliseconds(RHIGetGPUFrameCycles());
 	}
 	else {
 		// warmup: only its worst frame and hitches go to the file
@@ -234,12 +238,13 @@ void UCoopArenaBenchSubsystem::WriteResults() const {
 	const auto Path = FPaths::ProfilingDir() / TEXT("Bench.csv");
 	FString Text;
 	if (!IFileManager::Get().FileExists(*Path))
-		Text = TEXT("Time,Config,ShaderPlatform,Resolution,Frames,AvgMs,P50Ms,P95Ms,P99Ms,MaxMs,SlowFrames,LoadSec,WarmupMaxMs,WarmupHitches,RamMiB,RamPeakMiB,VramMiB,TexturesMiB,CommandLine\n");
+		Text = TEXT("Time,Config,ShaderPlatform,Resolution,Frames,AvgMs,P50Ms,P95Ms,P99Ms,MaxMs,SlowFrames,GameThreadMs,RenderThreadMs,GPUMs,LoadSec,WarmupMaxMs,WarmupHitches,RamMiB,RamPeakMiB,VramMiB,TexturesMiB,CommandLine\n");
 	Text += FString::Printf(
-		TEXT("%s,%s,%s,%dx%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%.2f,%.2f,%d,%.1f,%.1f,%.1f,%.1f,\"%s\"\n"),
+		TEXT("%s,%s,%s,%dx%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%.1f,%.1f,%.1f,%.1f,\"%s\"\n"),
 		*FDateTime::Now().ToString(), LexToString(FApp::GetBuildConfiguration()), *FDataDrivenShaderPlatformInfo::GetName(GMaxRHIShaderPlatform).ToString(),
 		GSystemResolution.ResX, GSystemResolution.ResY, Sorted.Num(),
 		TotalMs / Sorted.Num(), Percentile(0.5), Percentile(0.95), Percentile(0.99), Sorted.Last(), SlowFrames,
+		GameThreadTotalMs / Sorted.Num(), RenderThreadTotalMs / Sorted.Num(), GPUTotalMs / Sorted.Num(),
 		StartTime - GStartTime, WarmupMaxMs, WarmupHitches,
 		Memory.UsedPhysical / BytesPerMiB, Memory.PeakUsedPhysical / BytesPerMiB, GetVideoMemoryUsage() / BytesPerMiB, (TextureMemory.StreamingMemorySize + TextureMemory.NonStreamingMemorySize) / BytesPerMiB,
 		*FString(FCommandLine::Get()).Replace(TEXT("\""), TEXT("\"\""))

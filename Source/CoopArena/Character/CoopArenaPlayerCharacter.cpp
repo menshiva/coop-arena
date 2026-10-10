@@ -10,6 +10,10 @@
 #include "Projectiles/CoopArenaProjectileManager.h"
 
 ACoopArenaPlayerCharacter::ACoopArenaPlayerCharacter() {
+	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bStartWithTickEnabled = false;
+	PrimaryActorTick.bAllowTickOnDedicatedServer = false;
+
 	GetCapsuleComponent()->InitCapsuleSize(32.0f, 90.0f);
 
 	// Don't rotate when the controller rotates. Let that just affect the camera.

@@ -9,6 +9,7 @@
 #include "Engine/OverlapResult.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameModes/CoopArenaGameState.h"
+#include "Navigation/CrowdFollowingComponent.h"
 
 #if ENABLE_DRAW_DEBUG
 static TAutoConsoleVariable CVarDebugApproach(TEXT("CoopArena.DebugApproach"), false, TEXT("Draws where each enemy runs"));
@@ -76,6 +77,8 @@ void UCoopArenaBTService_Approach::TickNode(UBehaviorTreeComponent& OwnerComp, u
 	// arrived
 	const bool bArrived = IsArrived(*EnemyPtr, *PlayerPtr, Memory, DeltaSeconds);
 	BlackboardPtr->SetValue<UBlackboardKeyType_Bool>(ArrivedKeyID, bArrived);
+	if (const auto CrowdPtr = Cast<UCrowdFollowingComponent>(ControllerPtr->GetPathFollowingComponent()))
+		CrowdPtr->SuspendCrowdSteering(bArrived);
 
 #if ENABLE_DRAW_DEBUG
 	if (CVarDebugApproach.GetValueOnGameThread()) {
